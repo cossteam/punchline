@@ -5,7 +5,37 @@ option go_package = "github.com/cossteam/punch/api";
 
 //import "google/protobuf/any.proto";
 
+message Msg {
+  string Value = 1;
+}
+
+service PubSubService {
+  rpc Publish (PublishRequest) returns (PublishResponse);
+  rpc Subscribe (SubscribeRequest) returns (stream Message);
+}
+
+message Message {
+  string topic = 1;
+  bytes data = 3;
+}
+
+message PublishRequest {
+  string topic = 1;
+  string hostname = 2;
+  bytes data = 3;
+}
+
+message PublishResponse {}
+
+message SubscribeRequest {
+  string topic = 1;
+  string hostname = 2;
+}
+
+
 service PunchService {
+  rpc HostRegister(HostRegisterRequest) returns (HostRegisterResponse);
+
   // 客户端向协调服务器查询目标客户端的地址信息
   rpc HostQuery(HostQueryRequest) returns (HostQueryResponse);
 
@@ -19,7 +49,17 @@ service PunchService {
   rpc HostMoved(HostMovedRequest) returns (HostMovedResponse);
 
   // 客户端订阅另一个客户端的地址变动通知
-  rpc HostSubscribe(HostSubscribeRequest) returns (HostSubscribeResponse);
+  rpc HostSubscribe(HostSubscribeRequest) returns (stream HostSubscribeResponse);
+}
+
+message HostRegisterRequest {
+  string hostname = 1;
+  repeated ipv4Addr ipv4_addr = 2;
+  repeated ipv6Addr ipv6_addr = 3;
+}
+
+message HostRegisterResponse {
+  bool success = 1;
 }
 
 message HostQueryRequest {
@@ -60,12 +100,13 @@ message HostMovedResponse {
 }
 
 message HostSubscribeRequest {
-  string subscriber_hostname = 1;
-  string target_hostname = 2;
+  string topic = 1;
+  string hostname = 2;
 }
 
 message HostSubscribeResponse {
-  bool success = 1;
+  string event = 1;
+  string data = 2;
 }
 
 message HostMessage {
@@ -76,6 +117,7 @@ message HostMessage {
     HostUpdateNotification = 3;
     HostMovedNotification = 4;
     HostPunchNotification = 5;
+    HostRegister = 6;
   }
   MessageType type = 1;
   repeated ipv4Addr ipv4_addr = 3;
@@ -96,14 +138,12 @@ message ipv6Addr {
 
 service PublisherService {
   rpc AddTopic (TopicRequest) returns (TopicResponse);
-  rpc Publish (PublishRequest) returns (PublishResponse);
-  rpc Subscribe (SubscribeRequest) returns (stream SubscribeResponse);
-  rpc Unsubscribe (UnsubscribeRequest) returns (UnsubscribeResponse);
-}
 
-message Message {
-  string event = 1;
-//  google.protobuf.Any data = 2;
+  rpc Publish (PublishRequest) returns (PublishResponse);
+
+  rpc Subscribe (SubscribeRequest) returns (stream SubscribeResponse);
+
+  rpc Unsubscribe (UnsubscribeRequest) returns (UnsubscribeResponse);
 }
 
 message TopicRequest {
@@ -113,21 +153,6 @@ message TopicRequest {
 message TopicResponse {
   bool success = 1;
   string error_message = 2;
-}
-
-message PublishRequest {
-  string topic = 1;
-  Message message = 2;
-}
-
-message PublishResponse {
-  bool success = 1;
-  string error_message = 2;
-}
-
-message SubscribeRequest {
-  string topic = 1;
-  string client_id = 2;
 }
 
 message SubscribeResponse {

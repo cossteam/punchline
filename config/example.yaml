@@ -1,0 +1,7 @@
+publisher:
+  name: "publisher1"
+  addr: "127.0.0.1:8080"
+
+subscriptions:
+  - name: "subscriber1"
+  - name: "subscriber2"

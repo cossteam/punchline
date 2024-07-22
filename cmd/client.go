@@ -6,6 +6,7 @@ import (
 	"github.com/cossteam/punchline/pkg/log"
 	"github.com/cossteam/punchline/pkg/transport/udp"
 	"github.com/urfave/cli/v2"
+	"go.uber.org/zap"
 	"net"
 )
 
@@ -18,6 +19,12 @@ var Client = &cli.Command{
 	Usage: "client",
 	Flags: []cli.Flag{
 		&cli.StringFlag{
+			Name:    "config",
+			Aliases: []string{"c"},
+			Usage:   "config file path",
+			Value:   "config.yaml",
+		},
+		&cli.StringFlag{
 			Name:    "loglevel",
 			Aliases: []string{"ll"},
 			Usage:   "log level (debug info warn error dpanic panic fatal)",
@@ -26,12 +33,12 @@ var Client = &cli.Command{
 		&cli.StringFlag{
 			Name:  "hostname",
 			Usage: "hostname",
-			Value: "client-1",
+			Value: "",
 		},
 		&cli.StringFlag{
-			Name:    "port",
-			Usage:   "port",
-			Aliases: []string{"p"},
+			Name:    "endpoint_port",
+			Usage:   "endpoint_port",
+			Aliases: []string{"ep"},
 			Value:   "0",
 		},
 		&cli.StringFlag{
@@ -45,22 +52,22 @@ var Client = &cli.Command{
 }
 
 func runClient(ctx *cli.Context) error {
-	logLevel := ctx.String("loglevel")
-	hostname := ctx.String("hostname")
-	listenPort := ctx.Int("port")
-	server := ctx.String("server")
-
-	logger, err := log.SetupLogger(logLevel)
+	c, err := applyConfig(ctx)
 	if err != nil {
 		return err
 	}
 
-	raddr, err := net.ResolveUDPAddr("udp", server)
+	logger, err := log.SetupLogger(c.Loglevel)
 	if err != nil {
 		return err
 	}
 
-	makeup, err := udp.DialMakeup(raddr.IP)
+	raddr, err := net.ResolveUDPAddr("udp", c.Server)
+	if err != nil {
+		return err
+	}
+
+	makeup, err := udp.DialMakeup(raddr.IP, raddr.Port)
 	if err != nil {
 		return fmt.Errorf("failed to dial makeup: %w", err)
 	}
@@ -70,7 +77,7 @@ func runClient(ctx *cli.Context) error {
 		coordinator = append(coordinator, raddr)
 	}
 
-	client := controller.NewClient(logger, uint32(listenPort), hostname, makeup, coordinator)
+	client := controller.NewClient(logger.With(zap.String("controller", "client")), uint32(c.EndpointPort), c.Hostname, makeup, coordinator, c)
 
-	return client.Start(ctx.Context)
+	return client.Start(SetupSignalHandler())
 }

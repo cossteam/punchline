@@ -19,6 +19,160 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
+	PubSubService_Publish_FullMethodName   = "/api.PubSubService/Publish"
+	PubSubService_Subscribe_FullMethodName = "/api.PubSubService/Subscribe"
+)
+
+// PubSubServiceClient is the client API for PubSubService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type PubSubServiceClient interface {
+	Publish(ctx context.Context, in *PublishRequest, opts ...grpc.CallOption) (*PublishResponse, error)
+	Subscribe(ctx context.Context, in *SubscribeRequest, opts ...grpc.CallOption) (PubSubService_SubscribeClient, error)
+}
+
+type pubSubServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewPubSubServiceClient(cc grpc.ClientConnInterface) PubSubServiceClient {
+	return &pubSubServiceClient{cc}
+}
+
+func (c *pubSubServiceClient) Publish(ctx context.Context, in *PublishRequest, opts ...grpc.CallOption) (*PublishResponse, error) {
+	out := new(PublishResponse)
+	err := c.cc.Invoke(ctx, PubSubService_Publish_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *pubSubServiceClient) Subscribe(ctx context.Context, in *SubscribeRequest, opts ...grpc.CallOption) (PubSubService_SubscribeClient, error) {
+	stream, err := c.cc.NewStream(ctx, &PubSubService_ServiceDesc.Streams[0], PubSubService_Subscribe_FullMethodName, opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &pubSubServiceSubscribeClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type PubSubService_SubscribeClient interface {
+	Recv() (*Message, error)
+	grpc.ClientStream
+}
+
+type pubSubServiceSubscribeClient struct {
+	grpc.ClientStream
+}
+
+func (x *pubSubServiceSubscribeClient) Recv() (*Message, error) {
+	m := new(Message)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// PubSubServiceServer is the server API for PubSubService service.
+// All implementations should embed UnimplementedPubSubServiceServer
+// for forward compatibility
+type PubSubServiceServer interface {
+	Publish(context.Context, *PublishRequest) (*PublishResponse, error)
+	Subscribe(*SubscribeRequest, PubSubService_SubscribeServer) error
+}
+
+// UnimplementedPubSubServiceServer should be embedded to have forward compatible implementations.
+type UnimplementedPubSubServiceServer struct {
+}
+
+func (UnimplementedPubSubServiceServer) Publish(context.Context, *PublishRequest) (*PublishResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Publish not implemented")
+}
+func (UnimplementedPubSubServiceServer) Subscribe(*SubscribeRequest, PubSubService_SubscribeServer) error {
+	return status.Errorf(codes.Unimplemented, "method Subscribe not implemented")
+}
+
+// UnsafePubSubServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to PubSubServiceServer will
+// result in compilation errors.
+type UnsafePubSubServiceServer interface {
+	mustEmbedUnimplementedPubSubServiceServer()
+}
+
+func RegisterPubSubServiceServer(s grpc.ServiceRegistrar, srv PubSubServiceServer) {
+	s.RegisterService(&PubSubService_ServiceDesc, srv)
+}
+
+func _PubSubService_Publish_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PublishRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PubSubServiceServer).Publish(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PubSubService_Publish_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PubSubServiceServer).Publish(ctx, req.(*PublishRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _PubSubService_Subscribe_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(SubscribeRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(PubSubServiceServer).Subscribe(m, &pubSubServiceSubscribeServer{stream})
+}
+
+type PubSubService_SubscribeServer interface {
+	Send(*Message) error
+	grpc.ServerStream
+}
+
+type pubSubServiceSubscribeServer struct {
+	grpc.ServerStream
+}
+
+func (x *pubSubServiceSubscribeServer) Send(m *Message) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+// PubSubService_ServiceDesc is the grpc.ServiceDesc for PubSubService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var PubSubService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "api.PubSubService",
+	HandlerType: (*PubSubServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Publish",
+			Handler:    _PubSubService_Publish_Handler,
+		},
+	},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "Subscribe",
+			Handler:       _PubSubService_Subscribe_Handler,
+			ServerStreams: true,
+		},
+	},
+	Metadata: "api/v1/api.proto",
+}
+
+const (
+	PunchService_HostRegister_FullMethodName  = "/api.PunchService/HostRegister"
 	PunchService_HostQuery_FullMethodName     = "/api.PunchService/HostQuery"
 	PunchService_HostUpdate_FullMethodName    = "/api.PunchService/HostUpdate"
 	PunchService_HostPunch_FullMethodName     = "/api.PunchService/HostPunch"
@@ -30,6 +184,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PunchServiceClient interface {
+	HostRegister(ctx context.Context, in *HostRegisterRequest, opts ...grpc.CallOption) (*HostRegisterResponse, error)
 	// 客户端向协调服务器查询目标客户端的地址信息
 	HostQuery(ctx context.Context, in *HostQueryRequest, opts ...grpc.CallOption) (*HostQueryResponse, error)
 	// 客户端向协调服务器更新自己的地址信息
@@ -39,7 +194,7 @@ type PunchServiceClient interface {
 	// 通知协调服务器客户端的地址发生变化
 	HostMoved(ctx context.Context, in *HostMovedRequest, opts ...grpc.CallOption) (*HostMovedResponse, error)
 	// 客户端订阅另一个客户端的地址变动通知
-	HostSubscribe(ctx context.Context, in *HostSubscribeRequest, opts ...grpc.CallOption) (*HostSubscribeResponse, error)
+	HostSubscribe(ctx context.Context, in *HostSubscribeRequest, opts ...grpc.CallOption) (PunchService_HostSubscribeClient, error)
 }
 
 type punchServiceClient struct {
@@ -48,6 +203,15 @@ type punchServiceClient struct {
 
 func NewPunchServiceClient(cc grpc.ClientConnInterface) PunchServiceClient {
 	return &punchServiceClient{cc}
+}
+
+func (c *punchServiceClient) HostRegister(ctx context.Context, in *HostRegisterRequest, opts ...grpc.CallOption) (*HostRegisterResponse, error) {
+	out := new(HostRegisterResponse)
+	err := c.cc.Invoke(ctx, PunchService_HostRegister_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *punchServiceClient) HostQuery(ctx context.Context, in *HostQueryRequest, opts ...grpc.CallOption) (*HostQueryResponse, error) {
@@ -86,19 +250,43 @@ func (c *punchServiceClient) HostMoved(ctx context.Context, in *HostMovedRequest
 	return out, nil
 }
 
-func (c *punchServiceClient) HostSubscribe(ctx context.Context, in *HostSubscribeRequest, opts ...grpc.CallOption) (*HostSubscribeResponse, error) {
-	out := new(HostSubscribeResponse)
-	err := c.cc.Invoke(ctx, PunchService_HostSubscribe_FullMethodName, in, out, opts...)
+func (c *punchServiceClient) HostSubscribe(ctx context.Context, in *HostSubscribeRequest, opts ...grpc.CallOption) (PunchService_HostSubscribeClient, error) {
+	stream, err := c.cc.NewStream(ctx, &PunchService_ServiceDesc.Streams[0], PunchService_HostSubscribe_FullMethodName, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &punchServiceHostSubscribeClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type PunchService_HostSubscribeClient interface {
+	Recv() (*HostSubscribeResponse, error)
+	grpc.ClientStream
+}
+
+type punchServiceHostSubscribeClient struct {
+	grpc.ClientStream
+}
+
+func (x *punchServiceHostSubscribeClient) Recv() (*HostSubscribeResponse, error) {
+	m := new(HostSubscribeResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // PunchServiceServer is the server API for PunchService service.
 // All implementations should embed UnimplementedPunchServiceServer
 // for forward compatibility
 type PunchServiceServer interface {
+	HostRegister(context.Context, *HostRegisterRequest) (*HostRegisterResponse, error)
 	// 客户端向协调服务器查询目标客户端的地址信息
 	HostQuery(context.Context, *HostQueryRequest) (*HostQueryResponse, error)
 	// 客户端向协调服务器更新自己的地址信息
@@ -108,13 +296,16 @@ type PunchServiceServer interface {
 	// 通知协调服务器客户端的地址发生变化
 	HostMoved(context.Context, *HostMovedRequest) (*HostMovedResponse, error)
 	// 客户端订阅另一个客户端的地址变动通知
-	HostSubscribe(context.Context, *HostSubscribeRequest) (*HostSubscribeResponse, error)
+	HostSubscribe(*HostSubscribeRequest, PunchService_HostSubscribeServer) error
 }
 
 // UnimplementedPunchServiceServer should be embedded to have forward compatible implementations.
 type UnimplementedPunchServiceServer struct {
 }
 
+func (UnimplementedPunchServiceServer) HostRegister(context.Context, *HostRegisterRequest) (*HostRegisterResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HostRegister not implemented")
+}
 func (UnimplementedPunchServiceServer) HostQuery(context.Context, *HostQueryRequest) (*HostQueryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method HostQuery not implemented")
 }
@@ -127,8 +318,8 @@ func (UnimplementedPunchServiceServer) HostPunch(context.Context, *HostPunchRequ
 func (UnimplementedPunchServiceServer) HostMoved(context.Context, *HostMovedRequest) (*HostMovedResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method HostMoved not implemented")
 }
-func (UnimplementedPunchServiceServer) HostSubscribe(context.Context, *HostSubscribeRequest) (*HostSubscribeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method HostSubscribe not implemented")
+func (UnimplementedPunchServiceServer) HostSubscribe(*HostSubscribeRequest, PunchService_HostSubscribeServer) error {
+	return status.Errorf(codes.Unimplemented, "method HostSubscribe not implemented")
 }
 
 // UnsafePunchServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -140,6 +331,24 @@ type UnsafePunchServiceServer interface {
 
 func RegisterPunchServiceServer(s grpc.ServiceRegistrar, srv PunchServiceServer) {
 	s.RegisterService(&PunchService_ServiceDesc, srv)
+}
+
+func _PunchService_HostRegister_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HostRegisterRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PunchServiceServer).HostRegister(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PunchService_HostRegister_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PunchServiceServer).HostRegister(ctx, req.(*HostRegisterRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _PunchService_HostQuery_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -214,22 +423,25 @@ func _PunchService_HostMoved_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PunchService_HostSubscribe_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(HostSubscribeRequest)
-	if err := dec(in); err != nil {
-		return nil, err
+func _PunchService_HostSubscribe_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(HostSubscribeRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
 	}
-	if interceptor == nil {
-		return srv.(PunchServiceServer).HostSubscribe(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: PunchService_HostSubscribe_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PunchServiceServer).HostSubscribe(ctx, req.(*HostSubscribeRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+	return srv.(PunchServiceServer).HostSubscribe(m, &punchServiceHostSubscribeServer{stream})
+}
+
+type PunchService_HostSubscribeServer interface {
+	Send(*HostSubscribeResponse) error
+	grpc.ServerStream
+}
+
+type punchServiceHostSubscribeServer struct {
+	grpc.ServerStream
+}
+
+func (x *punchServiceHostSubscribeServer) Send(m *HostSubscribeResponse) error {
+	return x.ServerStream.SendMsg(m)
 }
 
 // PunchService_ServiceDesc is the grpc.ServiceDesc for PunchService service.
@@ -239,6 +451,10 @@ var PunchService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "api.PunchService",
 	HandlerType: (*PunchServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "HostRegister",
+			Handler:    _PunchService_HostRegister_Handler,
+		},
 		{
 			MethodName: "HostQuery",
 			Handler:    _PunchService_HostQuery_Handler,
@@ -255,12 +471,14 @@ var PunchService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "HostMoved",
 			Handler:    _PunchService_HostMoved_Handler,
 		},
+	},
+	Streams: []grpc.StreamDesc{
 		{
-			MethodName: "HostSubscribe",
-			Handler:    _PunchService_HostSubscribe_Handler,
+			StreamName:    "HostSubscribe",
+			Handler:       _PunchService_HostSubscribe_Handler,
+			ServerStreams: true,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
 	Metadata: "api/v1/api.proto",
 }
 
