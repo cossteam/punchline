@@ -7,6 +7,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"io"
 	"log"
+	"net"
+	"sync/atomic"
 )
 
 var _ PublisherClient = &client{}
@@ -38,6 +40,7 @@ func NewClient(addr string, opts ...ClientOption) (PublisherClient, error) {
 	c := &client{
 		pss:  api.NewPubSubServiceClient(conn),
 		conn: conn,
+		//subscribeStreams: make(map[string]grpc.ClientStream),
 	}
 
 	for _, opt := range opts {
@@ -47,13 +50,39 @@ func NewClient(addr string, opts ...ClientOption) (PublisherClient, error) {
 	return c, err
 }
 
+// NewClientWithDialer 使用 bufDialer 来创建一个 gRPC 客户端
+func NewClientWithDialer(bufDialer func(context.Context, string) (net.Conn, error), opts ...ClientOption) (PublisherClient, error) {
+	conn, err := grpc.DialContext(context.Background(), "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
+	if err != nil {
+		return nil, err
+	}
+
+	c := &client{
+		pss:  api.NewPubSubServiceClient(conn),
+		conn: conn,
+		//subscribeStreams: make(map[string]grpc.ClientStream),
+	}
+
+	for _, opt := range opts {
+		opt.apply(c)
+	}
+
+	return c, nil
+}
+
 type client struct {
 	hostname string
 	conn     *grpc.ClientConn
 	pss      api.PubSubServiceClient
+
+	closed atomic.Bool
+	//subscribeStreams map[string]grpc.ClientStream
+	//unsubCh          chan interface{}
+	//mu               sync.Mutex
 }
 
 func (c *client) Close() error {
+	c.closed.Store(true)
 	return c.conn.Close()
 }
 
@@ -79,11 +108,18 @@ func (c *client) Subscribe(ctx context.Context, topic string, handler func(*Mess
 		return err
 	}
 
+	//c.mu.Lock()
+	//if c.subscribeStreams == nil {
+	//	c.subscribeStreams = make(map[string]grpc.ClientStream)
+	//}
+	//c.subscribeStreams[topic] = stream
+	//c.mu.Unlock()
+
 	go func() {
 		for {
 			res, err := stream.Recv()
 			if err != nil {
-				if err == io.EOF {
+				if err == io.EOF || c.closed.Load() {
 					break
 				}
 				log.Printf("error receiving message from stream: %v", err)
@@ -96,7 +132,6 @@ func (c *client) Subscribe(ctx context.Context, topic string, handler func(*Mess
 				Data: res.Data,
 			}
 			if err := handler(msg); err != nil {
-				// 处理处理函数中的错误
 				log.Printf("error handling message: %v", err)
 			}
 		}
@@ -106,6 +141,9 @@ func (c *client) Subscribe(ctx context.Context, topic string, handler func(*Mess
 }
 
 func (c *client) Unsubscribe(ctx context.Context, topic string) error {
-	//TODO implement me
-	panic("implement me")
+	_, err := c.pss.Unsubscribe(context.Background(), &api.UnsubscribeRequest{
+		Topic:    topic,
+		Hostname: c.hostname,
+	})
+	return err
 }

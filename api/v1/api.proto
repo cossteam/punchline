@@ -12,6 +12,7 @@ message Msg {
 service PubSubService {
   rpc Publish (PublishRequest) returns (PublishResponse);
   rpc Subscribe (SubscribeRequest) returns (stream Message);
+  rpc Unsubscribe (UnsubscribeRequest) returns (UnsubscribeResponse);
 }
 
 message Message {
@@ -32,9 +33,15 @@ message SubscribeRequest {
   string hostname = 2;
 }
 
+message UnsubscribeRequest {
+  string topic = 1;
+  string hostname = 2;
+}
+
+message UnsubscribeResponse {}
 
 service PunchService {
-  rpc HostRegister(HostRegisterRequest) returns (HostRegisterResponse);
+  rpc HostOnline(HostOnlineRequest) returns (HostOnlineResponse);
 
   // 客户端向协调服务器查询目标客户端的地址信息
   rpc HostQuery(HostQueryRequest) returns (HostQueryResponse);
@@ -47,20 +54,16 @@ service PunchService {
 
   // 通知协调服务器客户端的地址发生变化
   rpc HostMoved(HostMovedRequest) returns (HostMovedResponse);
-
-  // 客户端订阅另一个客户端的地址变动通知
-  rpc HostSubscribe(HostSubscribeRequest) returns (stream HostSubscribeResponse);
 }
 
-message HostRegisterRequest {
+message HostOnlineRequest {
   string hostname = 1;
   repeated ipv4Addr ipv4_addr = 2;
   repeated ipv6Addr ipv6_addr = 3;
+  ipv4Addr external_addr = 4;
 }
 
-message HostRegisterResponse {
-  bool success = 1;
-}
+message HostOnlineResponse {}
 
 message HostQueryRequest {
   string target_hostname = 1;
@@ -75,6 +78,7 @@ message HostUpdateRequest {
   string hostname = 1;
   repeated ipv4Addr ipv4_addr = 2;
   repeated ipv6Addr ipv6_addr = 3;
+  ipv4Addr external_addr = 4;
 }
 
 message HostUpdateResponse {
@@ -117,7 +121,8 @@ message HostMessage {
     HostUpdateNotification = 3;
     HostMovedNotification = 4;
     HostPunchNotification = 5;
-    HostRegister = 6;
+    HostOnlineNotification = 6;
+    HostOfflineNotification = 7;
   }
   MessageType type = 1;
   ipv4Addr external_addr = 2;
@@ -135,37 +140,4 @@ message ipv6Addr {
   uint64 Hi = 1;
   uint64 Lo = 2;
   uint32 Port = 3;
-}
-
-service PublisherService {
-  rpc AddTopic (TopicRequest) returns (TopicResponse);
-
-  rpc Publish (PublishRequest) returns (PublishResponse);
-
-  rpc Subscribe (SubscribeRequest) returns (stream SubscribeResponse);
-
-  rpc Unsubscribe (UnsubscribeRequest) returns (UnsubscribeResponse);
-}
-
-message TopicRequest {
-  string name = 1;
-}
-
-message TopicResponse {
-  bool success = 1;
-  string error_message = 2;
-}
-
-message SubscribeResponse {
-  Message message = 1;
-}
-
-message UnsubscribeRequest {
-  string topic = 1;
-  string subscriber_id = 2;
-}
-
-message UnsubscribeResponse {
-  bool success = 1;
-  string error_message = 2;
 }

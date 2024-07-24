@@ -2,8 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/cossteam/punchline/pkg/controller"
+	"github.com/cossteam/punchline/pkg/controller/client"
 	"github.com/cossteam/punchline/pkg/log"
+	plugin "github.com/cossteam/punchline/pkg/plugin/client"
 	"github.com/cossteam/punchline/pkg/transport/udp"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
@@ -83,7 +84,20 @@ func runClient(ctx *cli.Context) error {
 		coordinator = append(coordinator, raddr)
 	}
 
-	client := controller.NewClient(logger.With(zap.String("controller", "client")), uint32(c.EndpointPort), c.Hostname, makeup, coordinator, c)
+	p1 := plugin.NewShellCommandPlugin(
+		logger.With(zap.String("plugin", "shellcommand")),
+		"shellcommand",
+	)
+
+	client := controller.NewClientController(
+		logger.With(zap.String("controller", "client")),
+		uint32(c.EndpointPort),
+		c.Hostname,
+		makeup,
+		coordinator,
+		c,
+		controller.WithClientPlugin(p1),
+	)
 
 	return client.Start(SetupSignalHandler())
 }

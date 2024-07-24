@@ -1,3 +1,8 @@
+
+CGO_ENABLED ?= 0
+GOOS ?= $(shell go env GOOS)
+GOARCH ?= $(shell go env GOARCH)
+
 # 防止命令行参数被误认为是目标
 %:
 	@:
@@ -10,3 +15,7 @@ gen: api/v1/api.proto
 	-go fmt ./...
 	rm protoc-gen-gogofaster
 	-protoc-go-inject-tag -input=api/v1/*.pb.go
+
+.PHONY: build
+build: dep ## Build the binary file
+	GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=$(CGO_ENABLED) go build -ldflags "-s -w" -o pl-$(GOOS)-$(GOARCH) main.go

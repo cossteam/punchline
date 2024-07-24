@@ -25,13 +25,14 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 type HostMessage_MessageType int32
 
 const (
-	HostMessage_None                   HostMessage_MessageType = 0
-	HostMessage_HostQuery              HostMessage_MessageType = 1
-	HostMessage_HostQueryReply         HostMessage_MessageType = 2
-	HostMessage_HostUpdateNotification HostMessage_MessageType = 3
-	HostMessage_HostMovedNotification  HostMessage_MessageType = 4
-	HostMessage_HostPunchNotification  HostMessage_MessageType = 5
-	HostMessage_HostRegister           HostMessage_MessageType = 6
+	HostMessage_None                    HostMessage_MessageType = 0
+	HostMessage_HostQuery               HostMessage_MessageType = 1
+	HostMessage_HostQueryReply          HostMessage_MessageType = 2
+	HostMessage_HostUpdateNotification  HostMessage_MessageType = 3
+	HostMessage_HostMovedNotification   HostMessage_MessageType = 4
+	HostMessage_HostPunchNotification   HostMessage_MessageType = 5
+	HostMessage_HostOnlineNotification  HostMessage_MessageType = 6
+	HostMessage_HostOfflineNotification HostMessage_MessageType = 7
 )
 
 var HostMessage_MessageType_name = map[int32]string{
@@ -41,17 +42,19 @@ var HostMessage_MessageType_name = map[int32]string{
 	3: "HostUpdateNotification",
 	4: "HostMovedNotification",
 	5: "HostPunchNotification",
-	6: "HostRegister",
+	6: "HostOnlineNotification",
+	7: "HostOfflineNotification",
 }
 
 var HostMessage_MessageType_value = map[string]int32{
-	"None":                   0,
-	"HostQuery":              1,
-	"HostQueryReply":         2,
-	"HostUpdateNotification": 3,
-	"HostMovedNotification":  4,
-	"HostPunchNotification":  5,
-	"HostRegister":           6,
+	"None":                    0,
+	"HostQuery":               1,
+	"HostQueryReply":          2,
+	"HostUpdateNotification":  3,
+	"HostMovedNotification":   4,
+	"HostPunchNotification":   5,
+	"HostOnlineNotification":  6,
+	"HostOfflineNotification": 7,
 }
 
 func (x HostMessage_MessageType) String() string {
@@ -59,7 +62,7 @@ func (x HostMessage_MessageType) String() string {
 }
 
 func (HostMessage_MessageType) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_1dfa6b8f70674874, []int{17, 0}
+	return fileDescriptor_1dfa6b8f70674874, []int{19, 0}
 }
 
 type Msg struct {
@@ -306,24 +309,23 @@ func (m *SubscribeRequest) GetHostname() string {
 	return ""
 }
 
-type HostRegisterRequest struct {
-	Hostname string      `protobuf:"bytes,1,opt,name=hostname,proto3" json:"hostname,omitempty"`
-	Ipv4Addr []*Ipv4Addr `protobuf:"bytes,2,rep,name=ipv4_addr,json=ipv4Addr,proto3" json:"ipv4_addr,omitempty"`
-	Ipv6Addr []*Ipv6Addr `protobuf:"bytes,3,rep,name=ipv6_addr,json=ipv6Addr,proto3" json:"ipv6_addr,omitempty"`
+type UnsubscribeRequest struct {
+	Topic    string `protobuf:"bytes,1,opt,name=topic,proto3" json:"topic,omitempty"`
+	Hostname string `protobuf:"bytes,2,opt,name=hostname,proto3" json:"hostname,omitempty"`
 }
 
-func (m *HostRegisterRequest) Reset()         { *m = HostRegisterRequest{} }
-func (m *HostRegisterRequest) String() string { return proto.CompactTextString(m) }
-func (*HostRegisterRequest) ProtoMessage()    {}
-func (*HostRegisterRequest) Descriptor() ([]byte, []int) {
+func (m *UnsubscribeRequest) Reset()         { *m = UnsubscribeRequest{} }
+func (m *UnsubscribeRequest) String() string { return proto.CompactTextString(m) }
+func (*UnsubscribeRequest) ProtoMessage()    {}
+func (*UnsubscribeRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_1dfa6b8f70674874, []int{5}
 }
-func (m *HostRegisterRequest) XXX_Unmarshal(b []byte) error {
+func (m *UnsubscribeRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *HostRegisterRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *UnsubscribeRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_HostRegisterRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_UnsubscribeRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -333,55 +335,47 @@ func (m *HostRegisterRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return b[:n], nil
 	}
 }
-func (m *HostRegisterRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_HostRegisterRequest.Merge(m, src)
+func (m *UnsubscribeRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UnsubscribeRequest.Merge(m, src)
 }
-func (m *HostRegisterRequest) XXX_Size() int {
+func (m *UnsubscribeRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *HostRegisterRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_HostRegisterRequest.DiscardUnknown(m)
+func (m *UnsubscribeRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_UnsubscribeRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_HostRegisterRequest proto.InternalMessageInfo
+var xxx_messageInfo_UnsubscribeRequest proto.InternalMessageInfo
 
-func (m *HostRegisterRequest) GetHostname() string {
+func (m *UnsubscribeRequest) GetTopic() string {
+	if m != nil {
+		return m.Topic
+	}
+	return ""
+}
+
+func (m *UnsubscribeRequest) GetHostname() string {
 	if m != nil {
 		return m.Hostname
 	}
 	return ""
 }
 
-func (m *HostRegisterRequest) GetIpv4Addr() []*Ipv4Addr {
-	if m != nil {
-		return m.Ipv4Addr
-	}
-	return nil
+type UnsubscribeResponse struct {
 }
 
-func (m *HostRegisterRequest) GetIpv6Addr() []*Ipv6Addr {
-	if m != nil {
-		return m.Ipv6Addr
-	}
-	return nil
-}
-
-type HostRegisterResponse struct {
-	Success bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-}
-
-func (m *HostRegisterResponse) Reset()         { *m = HostRegisterResponse{} }
-func (m *HostRegisterResponse) String() string { return proto.CompactTextString(m) }
-func (*HostRegisterResponse) ProtoMessage()    {}
-func (*HostRegisterResponse) Descriptor() ([]byte, []int) {
+func (m *UnsubscribeResponse) Reset()         { *m = UnsubscribeResponse{} }
+func (m *UnsubscribeResponse) String() string { return proto.CompactTextString(m) }
+func (*UnsubscribeResponse) ProtoMessage()    {}
+func (*UnsubscribeResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_1dfa6b8f70674874, []int{6}
 }
-func (m *HostRegisterResponse) XXX_Unmarshal(b []byte) error {
+func (m *UnsubscribeResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *HostRegisterResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *UnsubscribeResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_HostRegisterResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_UnsubscribeResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -391,24 +385,121 @@ func (m *HostRegisterResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte
 		return b[:n], nil
 	}
 }
-func (m *HostRegisterResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_HostRegisterResponse.Merge(m, src)
+func (m *UnsubscribeResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UnsubscribeResponse.Merge(m, src)
 }
-func (m *HostRegisterResponse) XXX_Size() int {
+func (m *UnsubscribeResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *HostRegisterResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_HostRegisterResponse.DiscardUnknown(m)
+func (m *UnsubscribeResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_UnsubscribeResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_HostRegisterResponse proto.InternalMessageInfo
+var xxx_messageInfo_UnsubscribeResponse proto.InternalMessageInfo
 
-func (m *HostRegisterResponse) GetSuccess() bool {
-	if m != nil {
-		return m.Success
+type HostOnlineRequest struct {
+	Hostname     string      `protobuf:"bytes,1,opt,name=hostname,proto3" json:"hostname,omitempty"`
+	Ipv4Addr     []*Ipv4Addr `protobuf:"bytes,2,rep,name=ipv4_addr,json=ipv4Addr,proto3" json:"ipv4_addr,omitempty"`
+	Ipv6Addr     []*Ipv6Addr `protobuf:"bytes,3,rep,name=ipv6_addr,json=ipv6Addr,proto3" json:"ipv6_addr,omitempty"`
+	ExternalAddr *Ipv4Addr   `protobuf:"bytes,4,opt,name=external_addr,json=externalAddr,proto3" json:"external_addr,omitempty"`
+}
+
+func (m *HostOnlineRequest) Reset()         { *m = HostOnlineRequest{} }
+func (m *HostOnlineRequest) String() string { return proto.CompactTextString(m) }
+func (*HostOnlineRequest) ProtoMessage()    {}
+func (*HostOnlineRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1dfa6b8f70674874, []int{7}
+}
+func (m *HostOnlineRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *HostOnlineRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_HostOnlineRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
 	}
-	return false
 }
+func (m *HostOnlineRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_HostOnlineRequest.Merge(m, src)
+}
+func (m *HostOnlineRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *HostOnlineRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_HostOnlineRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_HostOnlineRequest proto.InternalMessageInfo
+
+func (m *HostOnlineRequest) GetHostname() string {
+	if m != nil {
+		return m.Hostname
+	}
+	return ""
+}
+
+func (m *HostOnlineRequest) GetIpv4Addr() []*Ipv4Addr {
+	if m != nil {
+		return m.Ipv4Addr
+	}
+	return nil
+}
+
+func (m *HostOnlineRequest) GetIpv6Addr() []*Ipv6Addr {
+	if m != nil {
+		return m.Ipv6Addr
+	}
+	return nil
+}
+
+func (m *HostOnlineRequest) GetExternalAddr() *Ipv4Addr {
+	if m != nil {
+		return m.ExternalAddr
+	}
+	return nil
+}
+
+type HostOnlineResponse struct {
+}
+
+func (m *HostOnlineResponse) Reset()         { *m = HostOnlineResponse{} }
+func (m *HostOnlineResponse) String() string { return proto.CompactTextString(m) }
+func (*HostOnlineResponse) ProtoMessage()    {}
+func (*HostOnlineResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1dfa6b8f70674874, []int{8}
+}
+func (m *HostOnlineResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *HostOnlineResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_HostOnlineResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *HostOnlineResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_HostOnlineResponse.Merge(m, src)
+}
+func (m *HostOnlineResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *HostOnlineResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_HostOnlineResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_HostOnlineResponse proto.InternalMessageInfo
 
 type HostQueryRequest struct {
 	TargetHostname string `protobuf:"bytes,1,opt,name=target_hostname,json=targetHostname,proto3" json:"target_hostname,omitempty"`
@@ -418,7 +509,7 @@ func (m *HostQueryRequest) Reset()         { *m = HostQueryRequest{} }
 func (m *HostQueryRequest) String() string { return proto.CompactTextString(m) }
 func (*HostQueryRequest) ProtoMessage()    {}
 func (*HostQueryRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1dfa6b8f70674874, []int{7}
+	return fileDescriptor_1dfa6b8f70674874, []int{9}
 }
 func (m *HostQueryRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -463,7 +554,7 @@ func (m *HostQueryResponse) Reset()         { *m = HostQueryResponse{} }
 func (m *HostQueryResponse) String() string { return proto.CompactTextString(m) }
 func (*HostQueryResponse) ProtoMessage()    {}
 func (*HostQueryResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1dfa6b8f70674874, []int{8}
+	return fileDescriptor_1dfa6b8f70674874, []int{10}
 }
 func (m *HostQueryResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -507,16 +598,17 @@ func (m *HostQueryResponse) GetIpv6Addr() []*Ipv6Addr {
 }
 
 type HostUpdateRequest struct {
-	Hostname string      `protobuf:"bytes,1,opt,name=hostname,proto3" json:"hostname,omitempty"`
-	Ipv4Addr []*Ipv4Addr `protobuf:"bytes,2,rep,name=ipv4_addr,json=ipv4Addr,proto3" json:"ipv4_addr,omitempty"`
-	Ipv6Addr []*Ipv6Addr `protobuf:"bytes,3,rep,name=ipv6_addr,json=ipv6Addr,proto3" json:"ipv6_addr,omitempty"`
+	Hostname     string      `protobuf:"bytes,1,opt,name=hostname,proto3" json:"hostname,omitempty"`
+	Ipv4Addr     []*Ipv4Addr `protobuf:"bytes,2,rep,name=ipv4_addr,json=ipv4Addr,proto3" json:"ipv4_addr,omitempty"`
+	Ipv6Addr     []*Ipv6Addr `protobuf:"bytes,3,rep,name=ipv6_addr,json=ipv6Addr,proto3" json:"ipv6_addr,omitempty"`
+	ExternalAddr *Ipv4Addr   `protobuf:"bytes,4,opt,name=external_addr,json=externalAddr,proto3" json:"external_addr,omitempty"`
 }
 
 func (m *HostUpdateRequest) Reset()         { *m = HostUpdateRequest{} }
 func (m *HostUpdateRequest) String() string { return proto.CompactTextString(m) }
 func (*HostUpdateRequest) ProtoMessage()    {}
 func (*HostUpdateRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1dfa6b8f70674874, []int{9}
+	return fileDescriptor_1dfa6b8f70674874, []int{11}
 }
 func (m *HostUpdateRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -566,6 +658,13 @@ func (m *HostUpdateRequest) GetIpv6Addr() []*Ipv6Addr {
 	return nil
 }
 
+func (m *HostUpdateRequest) GetExternalAddr() *Ipv4Addr {
+	if m != nil {
+		return m.ExternalAddr
+	}
+	return nil
+}
+
 type HostUpdateResponse struct {
 	Success bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
 }
@@ -574,7 +673,7 @@ func (m *HostUpdateResponse) Reset()         { *m = HostUpdateResponse{} }
 func (m *HostUpdateResponse) String() string { return proto.CompactTextString(m) }
 func (*HostUpdateResponse) ProtoMessage()    {}
 func (*HostUpdateResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1dfa6b8f70674874, []int{10}
+	return fileDescriptor_1dfa6b8f70674874, []int{12}
 }
 func (m *HostUpdateResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -618,7 +717,7 @@ func (m *HostPunchRequest) Reset()         { *m = HostPunchRequest{} }
 func (m *HostPunchRequest) String() string { return proto.CompactTextString(m) }
 func (*HostPunchRequest) ProtoMessage()    {}
 func (*HostPunchRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1dfa6b8f70674874, []int{11}
+	return fileDescriptor_1dfa6b8f70674874, []int{13}
 }
 func (m *HostPunchRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -662,7 +761,7 @@ func (m *HostPunchResponse) Reset()         { *m = HostPunchResponse{} }
 func (m *HostPunchResponse) String() string { return proto.CompactTextString(m) }
 func (*HostPunchResponse) ProtoMessage()    {}
 func (*HostPunchResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1dfa6b8f70674874, []int{12}
+	return fileDescriptor_1dfa6b8f70674874, []int{14}
 }
 func (m *HostPunchResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -708,7 +807,7 @@ func (m *HostMovedRequest) Reset()         { *m = HostMovedRequest{} }
 func (m *HostMovedRequest) String() string { return proto.CompactTextString(m) }
 func (*HostMovedRequest) ProtoMessage()    {}
 func (*HostMovedRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1dfa6b8f70674874, []int{13}
+	return fileDescriptor_1dfa6b8f70674874, []int{15}
 }
 func (m *HostMovedRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -766,7 +865,7 @@ func (m *HostMovedResponse) Reset()         { *m = HostMovedResponse{} }
 func (m *HostMovedResponse) String() string { return proto.CompactTextString(m) }
 func (*HostMovedResponse) ProtoMessage()    {}
 func (*HostMovedResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1dfa6b8f70674874, []int{14}
+	return fileDescriptor_1dfa6b8f70674874, []int{16}
 }
 func (m *HostMovedResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -811,7 +910,7 @@ func (m *HostSubscribeRequest) Reset()         { *m = HostSubscribeRequest{} }
 func (m *HostSubscribeRequest) String() string { return proto.CompactTextString(m) }
 func (*HostSubscribeRequest) ProtoMessage()    {}
 func (*HostSubscribeRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1dfa6b8f70674874, []int{15}
+	return fileDescriptor_1dfa6b8f70674874, []int{17}
 }
 func (m *HostSubscribeRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -863,7 +962,7 @@ func (m *HostSubscribeResponse) Reset()         { *m = HostSubscribeResponse{} }
 func (m *HostSubscribeResponse) String() string { return proto.CompactTextString(m) }
 func (*HostSubscribeResponse) ProtoMessage()    {}
 func (*HostSubscribeResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1dfa6b8f70674874, []int{16}
+	return fileDescriptor_1dfa6b8f70674874, []int{18}
 }
 func (m *HostSubscribeResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -918,7 +1017,7 @@ func (m *HostMessage) Reset()         { *m = HostMessage{} }
 func (m *HostMessage) String() string { return proto.CompactTextString(m) }
 func (*HostMessage) ProtoMessage()    {}
 func (*HostMessage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1dfa6b8f70674874, []int{17}
+	return fileDescriptor_1dfa6b8f70674874, []int{19}
 }
 func (m *HostMessage) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -991,7 +1090,7 @@ func (m *Ipv4Addr) Reset()         { *m = Ipv4Addr{} }
 func (m *Ipv4Addr) String() string { return proto.CompactTextString(m) }
 func (*Ipv4Addr) ProtoMessage()    {}
 func (*Ipv4Addr) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1dfa6b8f70674874, []int{18}
+	return fileDescriptor_1dfa6b8f70674874, []int{20}
 }
 func (m *Ipv4Addr) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1044,7 +1143,7 @@ func (m *Ipv6Addr) Reset()         { *m = Ipv6Addr{} }
 func (m *Ipv6Addr) String() string { return proto.CompactTextString(m) }
 func (*Ipv6Addr) ProtoMessage()    {}
 func (*Ipv6Addr) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1dfa6b8f70674874, []int{19}
+	return fileDescriptor_1dfa6b8f70674874, []int{21}
 }
 func (m *Ipv6Addr) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1094,250 +1193,6 @@ func (m *Ipv6Addr) GetPort() uint32 {
 	return 0
 }
 
-type TopicRequest struct {
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-}
-
-func (m *TopicRequest) Reset()         { *m = TopicRequest{} }
-func (m *TopicRequest) String() string { return proto.CompactTextString(m) }
-func (*TopicRequest) ProtoMessage()    {}
-func (*TopicRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1dfa6b8f70674874, []int{20}
-}
-func (m *TopicRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *TopicRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_TopicRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *TopicRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TopicRequest.Merge(m, src)
-}
-func (m *TopicRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *TopicRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_TopicRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_TopicRequest proto.InternalMessageInfo
-
-func (m *TopicRequest) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
-type TopicResponse struct {
-	Success      bool   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	ErrorMessage string `protobuf:"bytes,2,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`
-}
-
-func (m *TopicResponse) Reset()         { *m = TopicResponse{} }
-func (m *TopicResponse) String() string { return proto.CompactTextString(m) }
-func (*TopicResponse) ProtoMessage()    {}
-func (*TopicResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1dfa6b8f70674874, []int{21}
-}
-func (m *TopicResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *TopicResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_TopicResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *TopicResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TopicResponse.Merge(m, src)
-}
-func (m *TopicResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *TopicResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_TopicResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_TopicResponse proto.InternalMessageInfo
-
-func (m *TopicResponse) GetSuccess() bool {
-	if m != nil {
-		return m.Success
-	}
-	return false
-}
-
-func (m *TopicResponse) GetErrorMessage() string {
-	if m != nil {
-		return m.ErrorMessage
-	}
-	return ""
-}
-
-type SubscribeResponse struct {
-	Message *Message `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
-}
-
-func (m *SubscribeResponse) Reset()         { *m = SubscribeResponse{} }
-func (m *SubscribeResponse) String() string { return proto.CompactTextString(m) }
-func (*SubscribeResponse) ProtoMessage()    {}
-func (*SubscribeResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1dfa6b8f70674874, []int{22}
-}
-func (m *SubscribeResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *SubscribeResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_SubscribeResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *SubscribeResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SubscribeResponse.Merge(m, src)
-}
-func (m *SubscribeResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *SubscribeResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_SubscribeResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_SubscribeResponse proto.InternalMessageInfo
-
-func (m *SubscribeResponse) GetMessage() *Message {
-	if m != nil {
-		return m.Message
-	}
-	return nil
-}
-
-type UnsubscribeRequest struct {
-	Topic        string `protobuf:"bytes,1,opt,name=topic,proto3" json:"topic,omitempty"`
-	SubscriberId string `protobuf:"bytes,2,opt,name=subscriber_id,json=subscriberId,proto3" json:"subscriber_id,omitempty"`
-}
-
-func (m *UnsubscribeRequest) Reset()         { *m = UnsubscribeRequest{} }
-func (m *UnsubscribeRequest) String() string { return proto.CompactTextString(m) }
-func (*UnsubscribeRequest) ProtoMessage()    {}
-func (*UnsubscribeRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1dfa6b8f70674874, []int{23}
-}
-func (m *UnsubscribeRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *UnsubscribeRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_UnsubscribeRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *UnsubscribeRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UnsubscribeRequest.Merge(m, src)
-}
-func (m *UnsubscribeRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *UnsubscribeRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_UnsubscribeRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_UnsubscribeRequest proto.InternalMessageInfo
-
-func (m *UnsubscribeRequest) GetTopic() string {
-	if m != nil {
-		return m.Topic
-	}
-	return ""
-}
-
-func (m *UnsubscribeRequest) GetSubscriberId() string {
-	if m != nil {
-		return m.SubscriberId
-	}
-	return ""
-}
-
-type UnsubscribeResponse struct {
-	Success      bool   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	ErrorMessage string `protobuf:"bytes,2,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`
-}
-
-func (m *UnsubscribeResponse) Reset()         { *m = UnsubscribeResponse{} }
-func (m *UnsubscribeResponse) String() string { return proto.CompactTextString(m) }
-func (*UnsubscribeResponse) ProtoMessage()    {}
-func (*UnsubscribeResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1dfa6b8f70674874, []int{24}
-}
-func (m *UnsubscribeResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *UnsubscribeResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_UnsubscribeResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *UnsubscribeResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UnsubscribeResponse.Merge(m, src)
-}
-func (m *UnsubscribeResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *UnsubscribeResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_UnsubscribeResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_UnsubscribeResponse proto.InternalMessageInfo
-
-func (m *UnsubscribeResponse) GetSuccess() bool {
-	if m != nil {
-		return m.Success
-	}
-	return false
-}
-
-func (m *UnsubscribeResponse) GetErrorMessage() string {
-	if m != nil {
-		return m.ErrorMessage
-	}
-	return ""
-}
-
 func init() {
 	proto.RegisterEnum("api.HostMessage_MessageType", HostMessage_MessageType_name, HostMessage_MessageType_value)
 	proto.RegisterType((*Msg)(nil), "api.Msg")
@@ -1345,8 +1200,10 @@ func init() {
 	proto.RegisterType((*PublishRequest)(nil), "api.PublishRequest")
 	proto.RegisterType((*PublishResponse)(nil), "api.PublishResponse")
 	proto.RegisterType((*SubscribeRequest)(nil), "api.SubscribeRequest")
-	proto.RegisterType((*HostRegisterRequest)(nil), "api.HostRegisterRequest")
-	proto.RegisterType((*HostRegisterResponse)(nil), "api.HostRegisterResponse")
+	proto.RegisterType((*UnsubscribeRequest)(nil), "api.UnsubscribeRequest")
+	proto.RegisterType((*UnsubscribeResponse)(nil), "api.UnsubscribeResponse")
+	proto.RegisterType((*HostOnlineRequest)(nil), "api.HostOnlineRequest")
+	proto.RegisterType((*HostOnlineResponse)(nil), "api.HostOnlineResponse")
 	proto.RegisterType((*HostQueryRequest)(nil), "api.HostQueryRequest")
 	proto.RegisterType((*HostQueryResponse)(nil), "api.HostQueryResponse")
 	proto.RegisterType((*HostUpdateRequest)(nil), "api.HostUpdateRequest")
@@ -1360,77 +1217,65 @@ func init() {
 	proto.RegisterType((*HostMessage)(nil), "api.HostMessage")
 	proto.RegisterType((*Ipv4Addr)(nil), "api.ipv4Addr")
 	proto.RegisterType((*Ipv6Addr)(nil), "api.ipv6Addr")
-	proto.RegisterType((*TopicRequest)(nil), "api.TopicRequest")
-	proto.RegisterType((*TopicResponse)(nil), "api.TopicResponse")
-	proto.RegisterType((*SubscribeResponse)(nil), "api.SubscribeResponse")
-	proto.RegisterType((*UnsubscribeRequest)(nil), "api.UnsubscribeRequest")
-	proto.RegisterType((*UnsubscribeResponse)(nil), "api.UnsubscribeResponse")
 }
 
 func init() { proto.RegisterFile("api/v1/api.proto", fileDescriptor_1dfa6b8f70674874) }
 
 var fileDescriptor_1dfa6b8f70674874 = []byte{
-	// 947 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x56, 0x4f, 0x6f, 0xe3, 0x44,
-	0x14, 0xef, 0xc4, 0xe9, 0x36, 0x7d, 0x8d, 0xb3, 0xee, 0xb4, 0x5b, 0xb2, 0x06, 0xa2, 0xca, 0x2b,
-	0x41, 0x85, 0x44, 0xda, 0xcd, 0x56, 0x8b, 0xc4, 0x02, 0xa2, 0xc0, 0x21, 0x91, 0xb6, 0xa5, 0xb8,
-	0xdd, 0x3d, 0x70, 0xa9, 0x1c, 0x7b, 0x48, 0x2d, 0xda, 0xd8, 0x78, 0xc6, 0x11, 0xf9, 0x02, 0xfc,
-	0xb9, 0xed, 0x27, 0xe0, 0xf3, 0x70, 0xdc, 0x23, 0x47, 0xd4, 0x7e, 0x0c, 0x2e, 0xc8, 0xf3, 0xc7,
-	0x99, 0x71, 0x02, 0xed, 0xae, 0x56, 0xda, 0x93, 0x67, 0xde, 0xff, 0xf7, 0x7b, 0xef, 0xcd, 0x33,
-	0x38, 0x41, 0x1a, 0xef, 0x4e, 0x1e, 0xee, 0x06, 0x69, 0xdc, 0x4d, 0xb3, 0x84, 0x25, 0xd8, 0x0a,
-	0xd2, 0xd8, 0x7b, 0x17, 0xac, 0x43, 0x3a, 0xc2, 0x9b, 0xb0, 0xfc, 0x3c, 0xb8, 0xc8, 0x49, 0x1b,
-	0x6d, 0xa3, 0x9d, 0x55, 0x5f, 0x5c, 0xbc, 0x47, 0xb0, 0x72, 0x48, 0x28, 0x0d, 0x46, 0xa4, 0x10,
-	0x60, 0x49, 0x1a, 0x87, 0x4a, 0x80, 0x5f, 0x30, 0x86, 0x7a, 0x14, 0xb0, 0xa0, 0x6d, 0x6d, 0xa3,
-	0x9d, 0xa6, 0xcf, 0xcf, 0xde, 0x73, 0x68, 0x1d, 0xe7, 0xc3, 0x8b, 0x98, 0x9e, 0xfb, 0xe4, 0xa7,
-	0x9c, 0x50, 0xf6, 0x1f, 0xba, 0x2e, 0x34, 0xce, 0x13, 0xca, 0xc6, 0xc1, 0x25, 0x69, 0xd7, 0x38,
-	0xa3, 0xbc, 0x2f, 0xb4, 0xbb, 0x0e, 0x77, 0x4b, 0xbb, 0x34, 0x4d, 0xc6, 0x94, 0x78, 0xdf, 0x80,
-	0x73, 0x92, 0x0f, 0x69, 0x98, 0xc5, 0x43, 0xf2, 0xda, 0xce, 0xbc, 0xdf, 0x11, 0x6c, 0xf4, 0x13,
-	0xca, 0x7c, 0x32, 0x8a, 0x29, 0x23, 0x99, 0xb2, 0xa4, 0xeb, 0xa0, 0x4a, 0x80, 0x1f, 0xc1, 0x6a,
-	0x9c, 0x4e, 0xf6, 0xcf, 0x82, 0x28, 0xca, 0xda, 0xb5, 0x6d, 0x6b, 0x67, 0xad, 0x67, 0x77, 0x0b,
-	0x68, 0x0b, 0xea, 0x41, 0x14, 0x65, 0x7e, 0x43, 0x9d, 0xa4, 0xec, 0x63, 0x21, 0x6b, 0x99, 0xb2,
-	0x8f, 0x4b, 0x59, 0x7e, 0xf2, 0xf6, 0x60, 0xd3, 0x0c, 0x45, 0x64, 0x8a, 0xdb, 0xb0, 0x42, 0xf3,
-	0x30, 0x24, 0x94, 0xf2, 0x50, 0x1a, 0xbe, 0xba, 0x7a, 0x4f, 0xc0, 0x29, 0x34, 0xbe, 0xcb, 0x49,
-	0x36, 0x55, 0x91, 0x7f, 0x08, 0x77, 0x59, 0x90, 0x8d, 0x08, 0x3b, 0xab, 0x24, 0xd0, 0x12, 0xe4,
-	0xbe, 0x4a, 0xfd, 0x47, 0x58, 0xd7, 0x94, 0xa5, 0x2f, 0x23, 0x37, 0xf4, 0x0a, 0xb9, 0xd5, 0xfe,
-	0x3f, 0xb7, 0x5f, 0x91, 0xf0, 0xf6, 0x2c, 0x8d, 0x02, 0x46, 0xde, 0x26, 0xca, 0x5d, 0xc0, 0x7a,
-	0x20, 0xb7, 0xc5, 0xf8, 0x38, 0x1f, 0x87, 0xe7, 0xaf, 0x8c, 0xf1, 0xc7, 0x22, 0x6b, 0xa9, 0x7c,
-	0xa3, 0xaf, 0x5f, 0x90, 0x70, 0x76, 0x98, 0x4c, 0x48, 0xf4, 0x36, 0x41, 0x92, 0x71, 0xcb, 0x38,
-	0x6e, 0x8c, 0xbb, 0x2f, 0x3a, 0xf7, 0x0d, 0xcc, 0xe3, 0x01, 0xdc, 0xab, 0x58, 0x92, 0xce, 0x37,
-	0x61, 0x99, 0x4c, 0xc8, 0x98, 0x29, 0x53, 0xfc, 0x52, 0xbe, 0x15, 0xc2, 0x8c, 0x78, 0x2b, 0x7e,
-	0xb3, 0x60, 0x8d, 0x07, 0x2f, 0x5f, 0xaf, 0x3d, 0xa8, 0xb3, 0x69, 0x2a, 0xb0, 0x6b, 0xf5, 0xde,
-	0xe3, 0x29, 0x6b, 0xfc, 0xae, 0xfc, 0x9e, 0x4e, 0x53, 0xe2, 0x73, 0x49, 0xdc, 0x03, 0x9b, 0xfc,
-	0xcc, 0x48, 0x36, 0x0e, 0x2e, 0x14, 0xb2, 0x68, 0x1e, 0xd9, 0xa6, 0x92, 0xd1, 0xd0, 0xdd, 0x5f,
-	0x88, 0xee, 0x82, 0x4a, 0x0c, 0xca, 0x4a, 0xd4, 0x17, 0x56, 0x62, 0x20, 0x4f, 0x06, 0x58, 0xcb,
-	0x15, 0xb0, 0xfe, 0x40, 0xb0, 0xa6, 0x45, 0x8f, 0x1b, 0x50, 0x3f, 0x4a, 0xc6, 0xc4, 0x59, 0xc2,
-	0x36, 0xac, 0x96, 0xb3, 0xed, 0x20, 0x8c, 0xa1, 0xa5, 0x8d, 0x7a, 0x7a, 0x31, 0x75, 0x6a, 0xd8,
-	0x85, 0xad, 0xd9, 0x1c, 0x1c, 0x25, 0x2c, 0xfe, 0x21, 0x0e, 0x03, 0x16, 0x27, 0x63, 0xc7, 0xc2,
-	0xf7, 0x45, 0x15, 0x78, 0xf9, 0x0d, 0x56, 0x5d, 0xb1, 0x78, 0x47, 0x1b, 0xac, 0x65, 0xec, 0x40,
-	0x53, 0x7f, 0xbf, 0x9c, 0x3b, 0x5e, 0x17, 0x66, 0x49, 0xb7, 0xa0, 0x36, 0x48, 0x79, 0x11, 0x6c,
-	0xbf, 0x36, 0x48, 0x8b, 0xd2, 0x1d, 0x27, 0x19, 0xe3, 0xd8, 0xda, 0x3e, 0x3f, 0x7b, 0x5f, 0x40,
-	0xd9, 0x82, 0x85, 0x7c, 0x3f, 0xe6, 0xf2, 0x75, 0xbf, 0xd6, 0x8f, 0x8b, 0xfb, 0xd3, 0x84, 0x4b,
-	0xd7, 0xfd, 0xda, 0xd3, 0xa4, 0xd4, 0xb7, 0x34, 0x7d, 0x0f, 0x9a, 0xa7, 0x45, 0x8b, 0xa9, 0xfe,
-	0xc3, 0x50, 0xd7, 0xc6, 0x86, 0x9f, 0xbd, 0x23, 0xb0, 0xa5, 0xcc, 0x4d, 0x6d, 0x8d, 0x1f, 0x80,
-	0x4d, 0xb2, 0x2c, 0xc9, 0xce, 0x2e, 0x05, 0xc8, 0xb2, 0xcd, 0x9a, 0x9c, 0x28, 0x81, 0xf7, 0x9e,
-	0xc0, 0xfa, 0x7c, 0xb7, 0x7e, 0x00, 0x2b, 0x4a, 0x07, 0xf1, 0xde, 0x69, 0xf2, 0xfa, 0x4a, 0x1d,
-	0x5f, 0x31, 0xbd, 0x6f, 0x01, 0x3f, 0x1b, 0xd3, 0xdb, 0x8d, 0xcd, 0x03, 0xb0, 0x4b, 0xc9, 0xec,
-	0x2c, 0x8e, 0x54, 0x34, 0x33, 0xe2, 0x20, 0xf2, 0x4e, 0x61, 0xc3, 0x30, 0xf8, 0x46, 0x72, 0xec,
-	0x4d, 0xc1, 0x3e, 0xce, 0x87, 0x27, 0xf9, 0xf0, 0x84, 0x64, 0x93, 0x38, 0x24, 0x78, 0x1f, 0x56,
-	0xe4, 0x3e, 0xc6, 0x1b, 0x3c, 0x33, 0x73, 0xeb, 0xbb, 0x9b, 0x26, 0x51, 0x46, 0xd1, 0x83, 0xd5,
-	0x12, 0x2a, 0x7c, 0x8f, 0x8b, 0x54, 0x9f, 0x0c, 0xd7, 0x00, 0x6a, 0x0f, 0xf5, 0x5e, 0x58, 0xd0,
-	0xe4, 0xcd, 0xa6, 0x5c, 0x7f, 0x6d, 0x76, 0x19, 0x6e, 0x97, 0x03, 0x5d, 0xd9, 0xe1, 0xee, 0xfd,
-	0x05, 0x1c, 0x19, 0xc9, 0xa7, 0xda, 0x7c, 0xc8, 0x48, 0xaa, 0x8b, 0xd4, 0xdd, 0xaa, 0x92, 0xa5,
-	0xee, 0xe7, 0x00, 0xb3, 0xc1, 0xc1, 0x33, 0x29, 0x63, 0xb5, 0xb9, 0xef, 0xcc, 0xd1, 0x4d, 0xd7,
-	0x3c, 0x27, 0xcd, 0xb5, 0xbe, 0x5f, 0x34, 0xd7, 0xe6, 0xe6, 0x90, 0xba, 0x7c, 0x2e, 0x35, 0x5d,
-	0x7d, 0x5d, 0x68, 0xba, 0xe6, 0xeb, 0xdd, 0x07, 0xdb, 0x78, 0x59, 0xf1, 0x0c, 0x9e, 0xb9, 0x22,
-	0xb8, 0x8b, 0x58, 0xc2, 0xce, 0x1e, 0xea, 0xfd, 0x83, 0xc0, 0x91, 0xa5, 0x25, 0x99, 0x2a, 0xcb,
-	0x43, 0x68, 0x1c, 0x44, 0x11, 0x9f, 0x2c, 0xbc, 0xce, 0xd5, 0xf5, 0x49, 0x74, 0xb1, 0x4e, 0x92,
-	0x11, 0xbd, 0x5e, 0x13, 0x7d, 0x76, 0x8b, 0x26, 0xda, 0xaa, 0x92, 0x55, 0xec, 0xf8, 0x4b, 0x58,
-	0xd3, 0xe6, 0x03, 0x8b, 0x2a, 0xcd, 0x8f, 0xa0, 0xdb, 0x9e, 0x67, 0x08, 0x1b, 0x5f, 0x7d, 0xf2,
-	0xe7, 0x55, 0x07, 0xbd, 0xbc, 0xea, 0xa0, 0xbf, 0xaf, 0x3a, 0xe8, 0xc5, 0x75, 0x67, 0xe9, 0xe5,
-	0x75, 0x67, 0xe9, 0xaf, 0xeb, 0xce, 0xd2, 0xf7, 0xef, 0x8f, 0x62, 0x76, 0x9e, 0x0f, 0xbb, 0x61,
-	0x72, 0xb9, 0x1b, 0x26, 0x94, 0x32, 0x12, 0x5c, 0xee, 0xa6, 0x45, 0x01, 0x8b, 0x1f, 0xef, 0xe1,
-	0x1d, 0xfe, 0xe7, 0xfd, 0xe8, 0xdf, 0x00, 0x00, 0x00, 0xff, 0xff, 0x92, 0x63, 0xd0, 0xf3, 0x8d,
-	0x0b, 0x00, 0x00,
+	// 836 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xd4, 0x56, 0xcb, 0x6e, 0xf3, 0x44,
+	0x14, 0x8e, 0x2f, 0xf9, 0x93, 0x9c, 0x5c, 0xfe, 0x74, 0x9a, 0xb6, 0x21, 0x85, 0x28, 0xf2, 0x86,
+	0x0a, 0x89, 0xa4, 0xa4, 0x55, 0x91, 0x40, 0x20, 0x8a, 0x10, 0x4a, 0xa4, 0xb6, 0x04, 0x97, 0x76,
+	0xc1, 0xa6, 0x72, 0x9c, 0x69, 0x62, 0x91, 0xda, 0xc6, 0x33, 0x8e, 0xc8, 0x0b, 0xb0, 0xe6, 0x4d,
+	0x78, 0x80, 0x6e, 0xd8, 0x20, 0xb1, 0xec, 0x92, 0x25, 0x6a, 0x5f, 0x04, 0x79, 0x66, 0xec, 0x8c,
+	0x9d, 0x42, 0x54, 0x40, 0x42, 0xff, 0x2a, 0x33, 0x73, 0xee, 0xdf, 0x77, 0x72, 0x8e, 0xa1, 0x6e,
+	0xf9, 0x4e, 0x6f, 0xf1, 0x41, 0xcf, 0xf2, 0x9d, 0xae, 0x1f, 0x78, 0xd4, 0x43, 0x9a, 0xe5, 0x3b,
+	0xc6, 0x3e, 0x68, 0xe7, 0x64, 0x8a, 0x1a, 0x90, 0xbf, 0xb6, 0xe6, 0x21, 0x6e, 0x2a, 0x1d, 0xe5,
+	0xa0, 0x64, 0xf2, 0x8b, 0x71, 0x04, 0x85, 0x73, 0x4c, 0x88, 0x35, 0xc5, 0x91, 0x02, 0xf5, 0x7c,
+	0xc7, 0x8e, 0x15, 0xd8, 0x05, 0x21, 0xd0, 0x27, 0x16, 0xb5, 0x9a, 0x5a, 0x47, 0x39, 0xa8, 0x98,
+	0xec, 0x6c, 0x5c, 0x43, 0x6d, 0x14, 0x8e, 0xe7, 0x0e, 0x99, 0x99, 0xf8, 0xfb, 0x10, 0x13, 0xfa,
+	0x17, 0xb6, 0x2d, 0x28, 0xce, 0x3c, 0x42, 0x5d, 0xeb, 0x0e, 0x37, 0x55, 0x26, 0x48, 0xee, 0xcf,
+	0xfa, 0xdd, 0x82, 0xd7, 0x89, 0x5f, 0xe2, 0x7b, 0x2e, 0xc1, 0xc6, 0x17, 0x50, 0xbf, 0x0c, 0xc7,
+	0xc4, 0x0e, 0x9c, 0x31, 0xfe, 0xc7, 0xc1, 0x8c, 0x2f, 0x01, 0x5d, 0xb9, 0xe4, 0xdf, 0xfb, 0xd9,
+	0x81, 0xed, 0x94, 0x1f, 0x91, 0xe4, 0xbd, 0x02, 0x5b, 0x03, 0x8f, 0xd0, 0xaf, 0xdc, 0xb9, 0xe3,
+	0x26, 0xee, 0x65, 0x47, 0x4a, 0xa6, 0xfa, 0xf7, 0xa0, 0xe4, 0xf8, 0x8b, 0xe3, 0x1b, 0x6b, 0x32,
+	0x09, 0x9a, 0x6a, 0x47, 0x3b, 0x28, 0xf7, 0xab, 0xdd, 0x88, 0xb7, 0xe8, 0xf5, 0x74, 0x32, 0x09,
+	0xcc, 0x62, 0x7c, 0x12, 0xba, 0x27, 0x5c, 0x57, 0x4b, 0xeb, 0x9e, 0x24, 0xba, 0xec, 0x84, 0xfa,
+	0x50, 0xc5, 0x3f, 0x50, 0x1c, 0xb8, 0xd6, 0x9c, 0xeb, 0xeb, 0x1d, 0x65, 0xdd, 0x77, 0x25, 0xd6,
+	0x89, 0x6e, 0x46, 0x03, 0x90, 0x9c, 0xbc, 0xa8, 0xe9, 0x63, 0xa8, 0x47, 0xaf, 0x5f, 0x87, 0x38,
+	0x58, 0xc6, 0x15, 0xbd, 0x0b, 0xaf, 0xa9, 0x15, 0x4c, 0x31, 0xbd, 0xc9, 0x14, 0x56, 0xe3, 0xcf,
+	0x83, 0x18, 0xa7, 0xef, 0x38, 0x1e, 0xc2, 0x98, 0x7b, 0x4c, 0xd7, 0xac, 0xbc, 0xa0, 0x66, 0xf5,
+	0x6f, 0x6b, 0x4e, 0xd0, 0xbf, 0xf2, 0x27, 0x16, 0x7d, 0xe3, 0xd0, 0xef, 0x72, 0xf4, 0xe3, 0xe4,
+	0x05, 0x56, 0x4d, 0x28, 0x90, 0xd0, 0xb6, 0x31, 0x21, 0x2c, 0xf9, 0xa2, 0x19, 0x5f, 0x63, 0x5e,
+	0x46, 0xa1, 0x6b, 0xcf, 0x5e, 0xcc, 0xcb, 0xfb, 0x1c, 0x29, 0x61, 0xbc, 0x31, 0xd6, 0x8f, 0x0a,
+	0x0f, 0x76, 0xee, 0x2d, 0xf0, 0xe4, 0x7f, 0x04, 0x36, 0xce, 0x5b, 0xe4, 0xb1, 0x31, 0xef, 0x01,
+	0x34, 0x22, 0xf5, 0xff, 0x60, 0x70, 0x9c, 0xc2, 0x4e, 0xc6, 0x93, 0x08, 0xde, 0x80, 0x3c, 0x5e,
+	0x60, 0x97, 0xc6, 0xae, 0xd8, 0x25, 0x19, 0x6a, 0xdc, 0x0d, 0x1f, 0x6a, 0x3f, 0x6b, 0x50, 0x66,
+	0xc9, 0x8b, 0x31, 0x7b, 0x08, 0x3a, 0x5d, 0xfa, 0x1c, 0xbb, 0x5a, 0xff, 0x6d, 0x56, 0xb2, 0x24,
+	0xef, 0x8a, 0xdf, 0x6f, 0x96, 0x3e, 0x36, 0x99, 0xe6, 0x7a, 0x5b, 0xa9, 0x1b, 0xdb, 0x2a, 0xcd,
+	0x84, 0xb6, 0x91, 0x89, 0x61, 0xc2, 0x84, 0xfe, 0x2c, 0x13, 0xc3, 0xb8, 0xc5, 0x65, 0xb0, 0xf2,
+	0x19, 0xb0, 0x7e, 0x55, 0xa0, 0x2c, 0x65, 0x8f, 0x8a, 0xa0, 0x5f, 0x78, 0x2e, 0xae, 0xe7, 0x50,
+	0x15, 0x4a, 0xc9, 0x3c, 0xa8, 0x2b, 0x08, 0x41, 0x4d, 0x1a, 0x0f, 0xfe, 0x7c, 0x59, 0x57, 0x51,
+	0x0b, 0x76, 0x57, 0xff, 0x83, 0x0b, 0x8f, 0x3a, 0xb7, 0x8e, 0x6d, 0x51, 0xc7, 0x73, 0xeb, 0x1a,
+	0x7a, 0x8b, 0xb3, 0xc0, 0xe8, 0x4f, 0x89, 0xf4, 0x58, 0xc4, 0x3a, 0x3a, 0x25, 0xca, 0xc7, 0x1e,
+	0xf9, 0x5c, 0x4b, 0xc9, 0x5e, 0xa1, 0x7d, 0xd8, 0x63, 0xb2, 0xdb, 0xdb, 0x35, 0x61, 0xc1, 0xe8,
+	0xc2, 0x0a, 0x9b, 0x1a, 0xa8, 0x43, 0x9f, 0x71, 0x55, 0x35, 0xd5, 0xa1, 0x1f, 0x31, 0x3c, 0xf2,
+	0x02, 0xca, 0x28, 0xa8, 0x9a, 0xec, 0x6c, 0x7c, 0x0a, 0xab, 0x11, 0x50, 0x03, 0x75, 0xe0, 0x30,
+	0x7d, 0xdd, 0x54, 0x07, 0x4e, 0x74, 0x3f, 0xf3, 0x98, 0xb6, 0x6e, 0xaa, 0x67, 0x5e, 0x62, 0xaf,
+	0xad, 0xec, 0xfb, 0xf7, 0x0a, 0x54, 0x47, 0xe1, 0xf8, 0x32, 0x1c, 0x5f, 0xe2, 0x60, 0xe1, 0xd8,
+	0x18, 0x1d, 0x43, 0x41, 0x2c, 0x42, 0xb4, 0xcd, 0x98, 0x48, 0xaf, 0xdb, 0x56, 0x23, 0xfd, 0x28,
+	0x7a, 0xb2, 0x0f, 0xa5, 0xa4, 0x51, 0xd1, 0x0e, 0x53, 0xc9, 0xfe, 0x05, 0x5a, 0x15, 0xf6, 0x2c,
+	0x58, 0x3a, 0x54, 0xd0, 0x67, 0x50, 0x96, 0x36, 0x1a, 0xda, 0x63, 0xe2, 0xf5, 0x5d, 0xd9, 0x6a,
+	0xae, 0x0b, 0x78, 0xd4, 0xfe, 0x2f, 0x2a, 0x54, 0x18, 0xfc, 0x71, 0xf2, 0x9f, 0x00, 0xac, 0x70,
+	0x47, 0xbb, 0x49, 0x83, 0xa7, 0xb6, 0x63, 0x6b, 0x6f, 0xed, 0x5d, 0x54, 0xf1, 0x91, 0xd4, 0x2b,
+	0xa2, 0x8a, 0xec, 0x22, 0x6a, 0xed, 0x66, 0x9f, 0x85, 0xad, 0x08, 0xcd, 0x9b, 0x48, 0x0a, 0x9d,
+	0x5a, 0x0d, 0x52, 0xe8, 0xcc, 0xd4, 0x15, 0xa1, 0x59, 0x35, 0x52, 0x68, 0x79, 0xd6, 0x4a, 0xa1,
+	0xd3, 0x53, 0x54, 0xd8, 0xb2, 0x1e, 0x95, 0x6c, 0xe5, 0xd1, 0x29, 0xd9, 0xa6, 0x26, 0xd9, 0xe7,
+	0x1f, 0xfe, 0xf6, 0xd8, 0x56, 0x1e, 0x1e, 0xdb, 0xca, 0x1f, 0x8f, 0x6d, 0xe5, 0xa7, 0xa7, 0x76,
+	0xee, 0xe1, 0xa9, 0x9d, 0xfb, 0xfd, 0xa9, 0x9d, 0xfb, 0xf6, 0x9d, 0xa9, 0x43, 0x67, 0xe1, 0xb8,
+	0x6b, 0x7b, 0x77, 0x3d, 0xdb, 0x23, 0x84, 0x62, 0xeb, 0xae, 0xe7, 0x47, 0x81, 0xa3, 0xaf, 0xbc,
+	0xf1, 0x2b, 0xf6, 0x99, 0x77, 0xf4, 0x67, 0x00, 0x00, 0x00, 0xff, 0xff, 0x97, 0x46, 0x97, 0x81,
+	0xfa, 0x09, 0x00, 0x00,
 }
 
 func (m *Msg) Marshal() (dAtA []byte, err error) {
@@ -1604,7 +1449,7 @@ func (m *SubscribeRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *HostRegisterRequest) Marshal() (dAtA []byte, err error) {
+func (m *UnsubscribeRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1614,16 +1459,88 @@ func (m *HostRegisterRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *HostRegisterRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *UnsubscribeRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *HostRegisterRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *UnsubscribeRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
+	if len(m.Hostname) > 0 {
+		i -= len(m.Hostname)
+		copy(dAtA[i:], m.Hostname)
+		i = encodeVarintApi(dAtA, i, uint64(len(m.Hostname)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Topic) > 0 {
+		i -= len(m.Topic)
+		copy(dAtA[i:], m.Topic)
+		i = encodeVarintApi(dAtA, i, uint64(len(m.Topic)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *UnsubscribeResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *UnsubscribeResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *UnsubscribeResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *HostOnlineRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *HostOnlineRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *HostOnlineRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.ExternalAddr != nil {
+		{
+			size, err := m.ExternalAddr.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x22
+	}
 	if len(m.Ipv6Addr) > 0 {
 		for iNdEx := len(m.Ipv6Addr) - 1; iNdEx >= 0; iNdEx-- {
 			{
@@ -1662,7 +1579,7 @@ func (m *HostRegisterRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *HostRegisterResponse) Marshal() (dAtA []byte, err error) {
+func (m *HostOnlineResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1672,26 +1589,16 @@ func (m *HostRegisterResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *HostRegisterResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *HostOnlineResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *HostRegisterResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *HostOnlineResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Success {
-		i--
-		if m.Success {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i--
-		dAtA[i] = 0x8
-	}
 	return len(dAtA) - i, nil
 }
 
@@ -1796,6 +1703,18 @@ func (m *HostUpdateRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.ExternalAddr != nil {
+		{
+			size, err := m.ExternalAddr.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintApi(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x22
+	}
 	if len(m.Ipv6Addr) > 0 {
 		for iNdEx := len(m.Ipv6Addr) - 1; iNdEx >= 0; iNdEx-- {
 			{
@@ -2241,188 +2160,6 @@ func (m *Ipv6Addr) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *TopicRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *TopicRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *TopicRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Name) > 0 {
-		i -= len(m.Name)
-		copy(dAtA[i:], m.Name)
-		i = encodeVarintApi(dAtA, i, uint64(len(m.Name)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *TopicResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *TopicResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *TopicResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.ErrorMessage) > 0 {
-		i -= len(m.ErrorMessage)
-		copy(dAtA[i:], m.ErrorMessage)
-		i = encodeVarintApi(dAtA, i, uint64(len(m.ErrorMessage)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if m.Success {
-		i--
-		if m.Success {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i--
-		dAtA[i] = 0x8
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *SubscribeResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *SubscribeResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *SubscribeResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.Message != nil {
-		{
-			size, err := m.Message.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintApi(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *UnsubscribeRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *UnsubscribeRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *UnsubscribeRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.SubscriberId) > 0 {
-		i -= len(m.SubscriberId)
-		copy(dAtA[i:], m.SubscriberId)
-		i = encodeVarintApi(dAtA, i, uint64(len(m.SubscriberId)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Topic) > 0 {
-		i -= len(m.Topic)
-		copy(dAtA[i:], m.Topic)
-		i = encodeVarintApi(dAtA, i, uint64(len(m.Topic)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *UnsubscribeResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *UnsubscribeResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *UnsubscribeResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.ErrorMessage) > 0 {
-		i -= len(m.ErrorMessage)
-		copy(dAtA[i:], m.ErrorMessage)
-		i = encodeVarintApi(dAtA, i, uint64(len(m.ErrorMessage)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if m.Success {
-		i--
-		if m.Success {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i--
-		dAtA[i] = 0x8
-	}
-	return len(dAtA) - i, nil
-}
-
 func encodeVarintApi(dAtA []byte, offset int, v uint64) int {
 	offset -= sovApi(v)
 	base := offset
@@ -2511,7 +2248,33 @@ func (m *SubscribeRequest) Size() (n int) {
 	return n
 }
 
-func (m *HostRegisterRequest) Size() (n int) {
+func (m *UnsubscribeRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Topic)
+	if l > 0 {
+		n += 1 + l + sovApi(uint64(l))
+	}
+	l = len(m.Hostname)
+	if l > 0 {
+		n += 1 + l + sovApi(uint64(l))
+	}
+	return n
+}
+
+func (m *UnsubscribeResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *HostOnlineRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -2533,18 +2296,19 @@ func (m *HostRegisterRequest) Size() (n int) {
 			n += 1 + l + sovApi(uint64(l))
 		}
 	}
+	if m.ExternalAddr != nil {
+		l = m.ExternalAddr.Size()
+		n += 1 + l + sovApi(uint64(l))
+	}
 	return n
 }
 
-func (m *HostRegisterResponse) Size() (n int) {
+func (m *HostOnlineResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.Success {
-		n += 2
-	}
 	return n
 }
 
@@ -2603,6 +2367,10 @@ func (m *HostUpdateRequest) Size() (n int) {
 			l = e.Size()
 			n += 1 + l + sovApi(uint64(l))
 		}
+	}
+	if m.ExternalAddr != nil {
+		l = m.ExternalAddr.Size()
+		n += 1 + l + sovApi(uint64(l))
 	}
 	return n
 }
@@ -2776,81 +2544,6 @@ func (m *Ipv6Addr) Size() (n int) {
 	}
 	if m.Port != 0 {
 		n += 1 + sovApi(uint64(m.Port))
-	}
-	return n
-}
-
-func (m *TopicRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Name)
-	if l > 0 {
-		n += 1 + l + sovApi(uint64(l))
-	}
-	return n
-}
-
-func (m *TopicResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Success {
-		n += 2
-	}
-	l = len(m.ErrorMessage)
-	if l > 0 {
-		n += 1 + l + sovApi(uint64(l))
-	}
-	return n
-}
-
-func (m *SubscribeResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Message != nil {
-		l = m.Message.Size()
-		n += 1 + l + sovApi(uint64(l))
-	}
-	return n
-}
-
-func (m *UnsubscribeRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Topic)
-	if l > 0 {
-		n += 1 + l + sovApi(uint64(l))
-	}
-	l = len(m.SubscriberId)
-	if l > 0 {
-		n += 1 + l + sovApi(uint64(l))
-	}
-	return n
-}
-
-func (m *UnsubscribeResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Success {
-		n += 2
-	}
-	l = len(m.ErrorMessage)
-	if l > 0 {
-		n += 1 + l + sovApi(uint64(l))
 	}
 	return n
 }
@@ -3371,7 +3064,7 @@ func (m *SubscribeRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *HostRegisterRequest) Unmarshal(dAtA []byte) error {
+func (m *UnsubscribeRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3394,10 +3087,174 @@ func (m *HostRegisterRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: HostRegisterRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: UnsubscribeRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: HostRegisterRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: UnsubscribeRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Topic", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthApi
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthApi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Topic = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Hostname", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthApi
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthApi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Hostname = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipApi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthApi
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *UnsubscribeResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowApi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: UnsubscribeResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: UnsubscribeResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipApi(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthApi
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *HostOnlineRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowApi
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: HostOnlineRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: HostOnlineRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -3500,6 +3357,42 @@ func (m *HostRegisterRequest) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ExternalAddr", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthApi
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthApi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ExternalAddr == nil {
+				m.ExternalAddr = &Ipv4Addr{}
+			}
+			if err := m.ExternalAddr.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipApi(dAtA[iNdEx:])
@@ -3521,7 +3414,7 @@ func (m *HostRegisterRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *HostRegisterResponse) Unmarshal(dAtA []byte) error {
+func (m *HostOnlineResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3544,32 +3437,12 @@ func (m *HostRegisterResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: HostRegisterResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: HostOnlineResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: HostRegisterResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: HostOnlineResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Success", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowApi
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.Success = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skipApi(dAtA[iNdEx:])
@@ -3917,6 +3790,42 @@ func (m *HostUpdateRequest) Unmarshal(dAtA []byte) error {
 			}
 			m.Ipv6Addr = append(m.Ipv6Addr, &Ipv6Addr{})
 			if err := m.Ipv6Addr[len(m.Ipv6Addr)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ExternalAddr", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowApi
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthApi
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthApi
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ExternalAddr == nil {
+				m.ExternalAddr = &Ipv4Addr{}
+			}
+			if err := m.ExternalAddr.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -4990,492 +4899,6 @@ func (m *Ipv6Addr) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		default:
-			iNdEx = preIndex
-			skippy, err := skipApi(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthApi
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *TopicRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowApi
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: TopicRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: TopicRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowApi
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthApi
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthApi
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Name = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipApi(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthApi
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *TopicResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowApi
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: TopicResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: TopicResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Success", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowApi
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.Success = bool(v != 0)
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ErrorMessage", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowApi
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthApi
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthApi
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ErrorMessage = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipApi(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthApi
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *SubscribeResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowApi
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: SubscribeResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: SubscribeResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Message", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowApi
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthApi
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthApi
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Message == nil {
-				m.Message = &Message{}
-			}
-			if err := m.Message.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipApi(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthApi
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *UnsubscribeRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowApi
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: UnsubscribeRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: UnsubscribeRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Topic", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowApi
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthApi
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthApi
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Topic = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SubscriberId", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowApi
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthApi
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthApi
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.SubscriberId = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipApi(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthApi
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *UnsubscribeResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowApi
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: UnsubscribeResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: UnsubscribeResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Success", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowApi
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.Success = bool(v != 0)
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ErrorMessage", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowApi
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthApi
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthApi
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ErrorMessage = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipApi(dAtA[iNdEx:])

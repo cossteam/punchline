@@ -25,7 +25,7 @@ var (
 	//_ pubsub.PubSubService = &serverController{}
 )
 
-func NewServer(
+func NewServerController(
 	logger *zap.Logger,
 	listenPort uint32,
 	hostname string,
@@ -67,6 +67,10 @@ type serverController struct {
 
 	p   []byte
 	out []byte
+}
+
+func (sc *serverController) Unsubscribe(ctx context.Context, request *api.UnsubscribeRequest) (*api.UnsubscribeResponse, error) {
+	return &api.UnsubscribeResponse{}, nil
 }
 
 func (sc *serverController) Publish(ctx context.Context, request *api.PublishRequest) (*api.PublishResponse, error) {
@@ -148,13 +152,7 @@ func (sc *serverController) HandleRequest(addr *udp.Addr, p []byte) {
 	}
 
 	var hostInfo *host.HostInfo
-	if hostInfo = sc.hostMap.GetHost(hm.Hostname); hostInfo == nil {
-		hostInfo = &host.HostInfo{
-			Name:    hm.Hostname,
-			Remotes: sc.unlockedGetRemoteList(hm.Hostname),
-		}
-		sc.hostMap.AddHost(hostInfo)
-	}
+	hostInfo = sc.GetOrCreateHostInfo(hm.Hostname)
 
 	//printUDPHeader(p)
 
@@ -167,8 +165,8 @@ func (sc *serverController) HandleRequest(addr *udp.Addr, p []byte) {
 		sc.handleHostUpdateNotification(hm, addr, hostInfo)
 	case api.HostMessage_HostMovedNotification:
 
-	case api.HostMessage_HostRegister:
-		sc.handleHostRegister(hm, addr)
+	case api.HostMessage_HostOnlineNotification:
+		sc.handleHostOnlineNotification(hm, addr)
 	}
 }
 
@@ -282,8 +280,21 @@ func (sc *serverController) unlockedGetRemoteList(name string) *host.RemoteList 
 	return am
 }
 
-func (sc *serverController) handleHostRegister(hm *api.HostMessage, addr *udp.Addr) {
-	sc.logger.Info("收到主机注册请求", zap.Any("hm", hm), zap.Any("addr", addr))
+func (sc *serverController) handleHostOnlineNotification(hm *api.HostMessage, addr *udp.Addr) {
+	sc.logger.Info("收到主机上线通知", zap.Any("hm", hm), zap.Any("addr", addr))
+}
+
+// GetOrCreateHostInfo retrieves the existing HostInfo or creates a new one if it doesn't exist.
+func (sc *serverController) GetOrCreateHostInfo(hostname string) *host.HostInfo {
+	hostInfo := sc.hostMap.GetHost(hostname)
+	if hostInfo == nil {
+		hostInfo = &host.HostInfo{
+			Name:    hostname,
+			Remotes: sc.unlockedGetRemoteList(hostname),
+		}
+		sc.hostMap.AddHost(hostInfo)
+	}
+	return hostInfo
 }
 
 func printUDPHeader(header []byte) {

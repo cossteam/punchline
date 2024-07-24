@@ -2,27 +2,15 @@ package publisher
 
 import (
 	"context"
-	"fmt"
-	"io"
+	"github.com/cossteam/punchline/api/v1"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/test/bufconn"
 	"net"
 	"testing"
 	"time"
-
-	"github.com/cossteam/punchline/api/v1"
-	"github.com/stretchr/testify/assert"
 )
-
-type MockHostSubscribeClient struct{}
-
-func (m *MockHostSubscribeClient) Recv() (*api.HostSubscribeResponse, error) {
-	// mock 实现
-	return nil, io.EOF
-}
-
-func (m *MockHostSubscribeClient) CloseSend() error {
-	// mock 实现
-	return nil
-}
 
 var (
 	Hostname = "test-hostname"
@@ -38,28 +26,65 @@ var (
 	}
 )
 
-func TestClient_Subscribe(t *testing.T) {
-	c, err := NewClient("localhost:7777", WithClientName(Hostname))
-	assert.NoError(t, err)
+const bufSize = 1024 * 1024
 
-	handlerCalled := false
+var lis *bufconn.Listener
+
+func bufDialer(context.Context, string) (net.Conn, error) {
+	return lis.Dial()
+}
+
+func startGRPCServer() *grpc.Server {
+	lis = bufconn.Listen(bufSize)
+	server := grpc.NewServer()
+	api.RegisterPubSubServiceServer(server, NewPubsubService(zap.NewNop()))
+
+	go func() {
+		if err := server.Serve(lis); err != nil {
+			panic(err)
+		}
+	}()
+
+	return server
+}
+
+func TestPubsubService_Unsubscribe(t *testing.T) {
+	server := startGRPCServer()
+	defer server.Stop()
+
+	c, err := NewClientWithDialer(bufDialer, WithClientName(Hostname))
+	assert.NoError(t, err)
+	defer c.Close()
+
+	ctx := context.Background()
+
+	err = c.Unsubscribe(ctx, "test-topic")
+	assert.NoError(t, err)
+}
+
+func TestClient_Subscribe(t *testing.T) {
+	server := startGRPCServer()
+	defer server.Stop()
+
+	c, err := NewClientWithDialer(bufDialer, WithClientName(Hostname))
+	assert.NoError(t, err)
+	defer c.Close()
+
 	handler := func(msg *Message) error {
-		handlerCalled = true
-		fmt.Println("subscribe handler msg Data => ", msg.Data)
 		return nil
 	}
 
 	err = c.Subscribe(context.Background(), "test-topic", handler)
 	assert.NoError(t, err)
-
-	// 等待 goroutine 处理消息
-	time.Sleep(3 * time.Second)
-	assert.True(t, handlerCalled)
 }
 
 func TestClient_Publish(t *testing.T) {
-	c, err := NewClient("localhost:7777", WithClientName(Hostname))
+	server := startGRPCServer()
+	defer server.Stop()
+
+	c, err := NewClientWithDialer(bufDialer, WithClientName(Hostname))
 	assert.NoError(t, err)
+	defer c.Close()
 
 	m := &api.HostMessage{
 		Type: api.HostMessage_HostUpdateNotification,
@@ -72,36 +97,57 @@ func TestClient_Publish(t *testing.T) {
 	assert.NoError(t, err)
 
 	err = c.Publish(context.Background(), &Message{
-		Topic: "client-2",
+		Topic: "test-topic",
 		Data:  marshal,
 	})
 	assert.NoError(t, err)
 }
 
-//func TestClient_Close(t *testing.T) {
-//	conn, err := grpc.Dial("localhost:7777", grpc.WithTransportCredentials(insecure.NewCredentials()))
-//	if err != nil {
-//		log.Fatalf("did not connect: %v", err)
-//	}
-//	defer conn.Close()
-//
-//	mockPunchServiceClient := api.NewPunchServiceClient(conn)
-//	c := NewClient(context.Background(), "test-hostname", mockPunchServiceClient)
-//
-//	err = c.Close()
-//	assert.Error(t, errors.New("implement me"), err)
-//}
-//
-//func TestClient_Unsubscribe(t *testing.T) {
-//	conn, err := grpc.Dial("localhost:7777", grpc.WithTransportCredentials(insecure.NewCredentials()))
-//	if err != nil {
-//		log.Fatalf("did not connect: %v", err)
-//	}
-//	defer conn.Close()
-//
-//	mockPunchServiceClient := api.NewPunchServiceClient(conn)
-//	c := NewClient(context.Background(), "test-hostname", mockPunchServiceClient)
-//
-//	err = c.Unsubscribe("test-topic")
-//	assert.NoError(t, err)
-//}
+func TestPubsubService_SubscribePublishUnsubscribe(t *testing.T) {
+	server := startGRPCServer()
+	defer server.Stop()
+
+	c, err := NewClientWithDialer(bufDialer, WithClientName(Hostname))
+	assert.NoError(t, err)
+	defer c.Close()
+
+	ctx := context.Background()
+
+	// 用于接收订阅消息的通道
+	msgCh := make(chan *Message, 1)
+	handler := func(msg *Message) error {
+		msgCh <- msg
+		return nil
+	}
+
+	// 订阅主题
+	err = c.Subscribe(ctx, "test-topic", handler)
+	assert.NoError(t, err)
+
+	// 发布消息
+	m := &api.HostMessage{
+		Type:     api.HostMessage_HostUpdateNotification,
+		Hostname: Hostname,
+	}
+	marshal, err := m.Marshal()
+	assert.NoError(t, err)
+
+	err = c.Publish(ctx, &Message{
+		Topic: "test-topic",
+		Data:  marshal,
+	})
+	assert.NoError(t, err)
+
+	// 确保消息被接收
+	select {
+	case msg := <-msgCh:
+		assert.Equal(t, "test-topic", msg.Topic)
+		assert.Equal(t, marshal, msg.Data)
+	case <-time.After(5 * time.Second):
+		t.Fatal("消息接收超时")
+	}
+
+	// 取消订阅
+	err = c.Unsubscribe(ctx, "test-topic")
+	assert.NoError(t, err)
+}

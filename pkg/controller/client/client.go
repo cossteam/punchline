@@ -7,9 +7,11 @@ import (
 	"github.com/cossteam/punchline/api/v1"
 	"github.com/cossteam/punchline/config"
 	"github.com/cossteam/punchline/pkg/host"
+	plugin "github.com/cossteam/punchline/pkg/plugin/client"
 	"github.com/cossteam/punchline/pkg/publisher"
 	stunclient "github.com/cossteam/punchline/pkg/sutn"
 	"github.com/cossteam/punchline/pkg/transport/udp"
+	"github.com/cossteam/punchline/pkg/utils"
 	"go.uber.org/zap"
 	"net"
 	"time"
@@ -17,16 +19,16 @@ import (
 
 var _ apiv1.Runnable = &clientController{}
 
-func NewClient(
+func NewClientController(
 	logger *zap.Logger,
 	listenPort uint32,
 	hostname string,
 	makeupWriter udp.MakeupWriter,
 	coordinator []*net.UDPAddr,
 	c *config.Config,
+	opts ...ClientOption,
 ) apiv1.Runnable {
-
-	return &clientController{
+	cc := &clientController{
 		logger:       logger,
 		listenPort:   listenPort,
 		hostname:     hostname,
@@ -34,7 +36,13 @@ func NewClient(
 		coordinator:  coordinator,
 		c:            c,
 	}
+	for _, opt := range opts {
+		opt(cc)
+	}
+	return cc
 }
+
+type ClientOption func(*clientController)
 
 type clientController struct {
 	c            *config.Config
@@ -48,8 +56,10 @@ type clientController struct {
 
 	hostMap *host.HostMap
 
-	stunClient stunclient.STUNClient
-	pubClient  publisher.PublisherClient
+	plugins     []plugin.Plugin
+	stunClient  stunclient.STUNClient
+	pubClient   publisher.PublisherClient
+	punchClient api.PunchServiceClient
 }
 
 func (cc *clientController) Start(ctx context.Context) error {
@@ -73,6 +83,7 @@ func (cc *clientController) Start(ctx context.Context) error {
 	cc.stunClient = stunClient
 
 	if err := cc.InitAndSubscribe(); err != nil {
+		cc.logger.Error("Failed to init and subscribe", zap.Error(err))
 		return err
 	}
 
@@ -129,12 +140,25 @@ func (cc *clientController) handleSubscribe(message *publisher.Message) error {
 		zap.Any("hm", hm),
 	)
 
+	go func() {
+		for _, p := range cc.plugins {
+			p.Handle(context.Background(), hm)
+		}
+	}()
+
 	switch hm.Type {
+	case api.HostMessage_HostOnlineNotification:
+		cc.handleHostOnlineNotification(hm)
 	case api.HostMessage_HostPunchNotification:
 		cc.handleHostPunchNotification(hm)
 	}
 
 	return nil
+}
+
+func (cc *clientController) handleHostOnlineNotification(hm *api.HostMessage) {
+	cc.logger.Debug("收到主机上线通知", zap.Any("hm", hm), zap.Any("makeupPort", cc.listenPort))
+	cc.handleHostPunchNotification(hm)
 }
 
 func (cc *clientController) handleHostPunchNotification(hm *api.HostMessage) {
@@ -160,78 +184,16 @@ func (cc *clientController) handleHostPunchNotification(hm *api.HostMessage) {
 	}
 
 	for _, a := range hm.Ipv4Addr {
-		vpnPeer := NewUDPAddrFromLH4(a)
+		vpnPeer := utils.NewUDPAddrFromLH4(a)
 		if vpnPeer != nil {
 			go punch(vpnPeer)
 		}
 	}
 
 	for _, a := range hm.Ipv6Addr {
-		vpnPeer := NewUDPAddrFromLH6(a)
+		vpnPeer := utils.NewUDPAddrFromLH6(a)
 		if vpnPeer != nil {
 			go punch(vpnPeer)
 		}
-	}
-}
-
-func (cc *clientController) SendUpdate() {
-	var v4 []*api.Ipv4Addr
-	var v6 []*api.Ipv6Addr
-
-	for _, e := range *localIps() {
-		//if ip4 := e.To4(); ip4 != nil {
-		//	continue
-		//}
-
-		//fmt.Println("e => ", e)
-
-		// 只添加不是我的VPN/tun IP的IP
-		if ip := e.To4(); ip != nil {
-			v4 = append(v4, api.NewIpv4Addr(e, cc.listenPort))
-		} else {
-			v6 = append(v6, api.NewIpv6Addr(e, cc.listenPort))
-		}
-	}
-
-	addrs, err := cc.stunClient.ExternalAddrs()
-	if err != nil {
-		cc.logger.Error("Error while getting external addresses", zap.Error(err))
-	} else {
-		for _, a := range addrs {
-			v4 = append(v4, api.NewIpv4Addr(a.IP, uint32(a.Port)))
-		}
-	}
-
-	m := &api.HostMessage{
-		Type:     api.HostMessage_HostUpdateNotification,
-		Hostname: cc.hostname,
-		Ipv4Addr: v4,
-		Ipv6Addr: v6,
-	}
-
-	addr, err := cc.stunClient.ExternalAddr()
-	if err == nil {
-		m.ExternalAddr = api.NewIpv4Addr(addr.IP, uint32(addr.Port))
-	}
-
-	//out := make([]byte, mtu)
-	mm, err := m.Marshal()
-	if err != nil {
-		cc.logger.Error("Error while marshaling for lighthouse update", zap.Error(err))
-		return
-	}
-
-	for _, v := range cc.coordinator {
-		if err := cc.makeupWriter.WriteTo(uint16(cc.listenPort), uint16(v.Port), mm, &udp.Addr{
-			IP:   v.IP,
-			Port: uint16(v.Port),
-		}); err != nil {
-			cc.logger.Error("Error while sending lighthouse update", zap.Error(err))
-			return
-		}
-		//cc.logger.Debug("正在发送主机更新通知",
-		//	zap.Stringer("lighthouse", v),
-		//	zap.Any("msg", m))
-		//lc.interfaceController.EncWriter().SendToVpnIP(header.LightHouse, 0, lighthouse.VpnIp, mm, out)
 	}
 }

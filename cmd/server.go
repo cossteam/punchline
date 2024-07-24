@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/cossteam/punchline/pkg/controller"
+	controllersrv "github.com/cossteam/punchline/pkg/controller/server"
 	"github.com/cossteam/punchline/pkg/log"
 	"github.com/cossteam/punchline/pkg/transport/udp"
 	"github.com/urfave/cli/v2"
@@ -74,7 +74,7 @@ func runServer(ctx *cli.Context) error {
 		return err
 	}
 
-	srv := controller.NewServer(logger.With(zap.String("controller", "server")), uint32(c.GrpcPort), c.Hostname, outside, c)
+	srv := controllersrv.NewServerController(logger.With(zap.String("controller", "server")), uint32(c.GrpcPort), c.Hostname, outside, c)
 
 	//var runnables []apiv1.Runnable
 	//runnables = append(runnables, srv)

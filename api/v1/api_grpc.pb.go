@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	PubSubService_Publish_FullMethodName   = "/api.PubSubService/Publish"
-	PubSubService_Subscribe_FullMethodName = "/api.PubSubService/Subscribe"
+	PubSubService_Publish_FullMethodName     = "/api.PubSubService/Publish"
+	PubSubService_Subscribe_FullMethodName   = "/api.PubSubService/Subscribe"
+	PubSubService_Unsubscribe_FullMethodName = "/api.PubSubService/Unsubscribe"
 )
 
 // PubSubServiceClient is the client API for PubSubService service.
@@ -29,6 +30,7 @@ const (
 type PubSubServiceClient interface {
 	Publish(ctx context.Context, in *PublishRequest, opts ...grpc.CallOption) (*PublishResponse, error)
 	Subscribe(ctx context.Context, in *SubscribeRequest, opts ...grpc.CallOption) (PubSubService_SubscribeClient, error)
+	Unsubscribe(ctx context.Context, in *UnsubscribeRequest, opts ...grpc.CallOption) (*UnsubscribeResponse, error)
 }
 
 type pubSubServiceClient struct {
@@ -80,12 +82,22 @@ func (x *pubSubServiceSubscribeClient) Recv() (*Message, error) {
 	return m, nil
 }
 
+func (c *pubSubServiceClient) Unsubscribe(ctx context.Context, in *UnsubscribeRequest, opts ...grpc.CallOption) (*UnsubscribeResponse, error) {
+	out := new(UnsubscribeResponse)
+	err := c.cc.Invoke(ctx, PubSubService_Unsubscribe_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PubSubServiceServer is the server API for PubSubService service.
 // All implementations should embed UnimplementedPubSubServiceServer
 // for forward compatibility
 type PubSubServiceServer interface {
 	Publish(context.Context, *PublishRequest) (*PublishResponse, error)
 	Subscribe(*SubscribeRequest, PubSubService_SubscribeServer) error
+	Unsubscribe(context.Context, *UnsubscribeRequest) (*UnsubscribeResponse, error)
 }
 
 // UnimplementedPubSubServiceServer should be embedded to have forward compatible implementations.
@@ -97,6 +109,9 @@ func (UnimplementedPubSubServiceServer) Publish(context.Context, *PublishRequest
 }
 func (UnimplementedPubSubServiceServer) Subscribe(*SubscribeRequest, PubSubService_SubscribeServer) error {
 	return status.Errorf(codes.Unimplemented, "method Subscribe not implemented")
+}
+func (UnimplementedPubSubServiceServer) Unsubscribe(context.Context, *UnsubscribeRequest) (*UnsubscribeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Unsubscribe not implemented")
 }
 
 // UnsafePubSubServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -149,6 +164,24 @@ func (x *pubSubServiceSubscribeServer) Send(m *Message) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _PubSubService_Unsubscribe_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnsubscribeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PubSubServiceServer).Unsubscribe(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PubSubService_Unsubscribe_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PubSubServiceServer).Unsubscribe(ctx, req.(*UnsubscribeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PubSubService_ServiceDesc is the grpc.ServiceDesc for PubSubService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -159,6 +192,10 @@ var PubSubService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Publish",
 			Handler:    _PubSubService_Publish_Handler,
+		},
+		{
+			MethodName: "Unsubscribe",
+			Handler:    _PubSubService_Unsubscribe_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
@@ -172,19 +209,18 @@ var PubSubService_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	PunchService_HostRegister_FullMethodName  = "/api.PunchService/HostRegister"
-	PunchService_HostQuery_FullMethodName     = "/api.PunchService/HostQuery"
-	PunchService_HostUpdate_FullMethodName    = "/api.PunchService/HostUpdate"
-	PunchService_HostPunch_FullMethodName     = "/api.PunchService/HostPunch"
-	PunchService_HostMoved_FullMethodName     = "/api.PunchService/HostMoved"
-	PunchService_HostSubscribe_FullMethodName = "/api.PunchService/HostSubscribe"
+	PunchService_HostOnline_FullMethodName = "/api.PunchService/HostOnline"
+	PunchService_HostQuery_FullMethodName  = "/api.PunchService/HostQuery"
+	PunchService_HostUpdate_FullMethodName = "/api.PunchService/HostUpdate"
+	PunchService_HostPunch_FullMethodName  = "/api.PunchService/HostPunch"
+	PunchService_HostMoved_FullMethodName  = "/api.PunchService/HostMoved"
 )
 
 // PunchServiceClient is the client API for PunchService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PunchServiceClient interface {
-	HostRegister(ctx context.Context, in *HostRegisterRequest, opts ...grpc.CallOption) (*HostRegisterResponse, error)
+	HostOnline(ctx context.Context, in *HostOnlineRequest, opts ...grpc.CallOption) (*HostOnlineResponse, error)
 	// 客户端向协调服务器查询目标客户端的地址信息
 	HostQuery(ctx context.Context, in *HostQueryRequest, opts ...grpc.CallOption) (*HostQueryResponse, error)
 	// 客户端向协调服务器更新自己的地址信息
@@ -193,8 +229,6 @@ type PunchServiceClient interface {
 	HostPunch(ctx context.Context, in *HostPunchRequest, opts ...grpc.CallOption) (*HostPunchResponse, error)
 	// 通知协调服务器客户端的地址发生变化
 	HostMoved(ctx context.Context, in *HostMovedRequest, opts ...grpc.CallOption) (*HostMovedResponse, error)
-	// 客户端订阅另一个客户端的地址变动通知
-	HostSubscribe(ctx context.Context, in *HostSubscribeRequest, opts ...grpc.CallOption) (PunchService_HostSubscribeClient, error)
 }
 
 type punchServiceClient struct {
@@ -205,9 +239,9 @@ func NewPunchServiceClient(cc grpc.ClientConnInterface) PunchServiceClient {
 	return &punchServiceClient{cc}
 }
 
-func (c *punchServiceClient) HostRegister(ctx context.Context, in *HostRegisterRequest, opts ...grpc.CallOption) (*HostRegisterResponse, error) {
-	out := new(HostRegisterResponse)
-	err := c.cc.Invoke(ctx, PunchService_HostRegister_FullMethodName, in, out, opts...)
+func (c *punchServiceClient) HostOnline(ctx context.Context, in *HostOnlineRequest, opts ...grpc.CallOption) (*HostOnlineResponse, error) {
+	out := new(HostOnlineResponse)
+	err := c.cc.Invoke(ctx, PunchService_HostOnline_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -250,43 +284,11 @@ func (c *punchServiceClient) HostMoved(ctx context.Context, in *HostMovedRequest
 	return out, nil
 }
 
-func (c *punchServiceClient) HostSubscribe(ctx context.Context, in *HostSubscribeRequest, opts ...grpc.CallOption) (PunchService_HostSubscribeClient, error) {
-	stream, err := c.cc.NewStream(ctx, &PunchService_ServiceDesc.Streams[0], PunchService_HostSubscribe_FullMethodName, opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &punchServiceHostSubscribeClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type PunchService_HostSubscribeClient interface {
-	Recv() (*HostSubscribeResponse, error)
-	grpc.ClientStream
-}
-
-type punchServiceHostSubscribeClient struct {
-	grpc.ClientStream
-}
-
-func (x *punchServiceHostSubscribeClient) Recv() (*HostSubscribeResponse, error) {
-	m := new(HostSubscribeResponse)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
 // PunchServiceServer is the server API for PunchService service.
 // All implementations should embed UnimplementedPunchServiceServer
 // for forward compatibility
 type PunchServiceServer interface {
-	HostRegister(context.Context, *HostRegisterRequest) (*HostRegisterResponse, error)
+	HostOnline(context.Context, *HostOnlineRequest) (*HostOnlineResponse, error)
 	// 客户端向协调服务器查询目标客户端的地址信息
 	HostQuery(context.Context, *HostQueryRequest) (*HostQueryResponse, error)
 	// 客户端向协调服务器更新自己的地址信息
@@ -295,16 +297,14 @@ type PunchServiceServer interface {
 	HostPunch(context.Context, *HostPunchRequest) (*HostPunchResponse, error)
 	// 通知协调服务器客户端的地址发生变化
 	HostMoved(context.Context, *HostMovedRequest) (*HostMovedResponse, error)
-	// 客户端订阅另一个客户端的地址变动通知
-	HostSubscribe(*HostSubscribeRequest, PunchService_HostSubscribeServer) error
 }
 
 // UnimplementedPunchServiceServer should be embedded to have forward compatible implementations.
 type UnimplementedPunchServiceServer struct {
 }
 
-func (UnimplementedPunchServiceServer) HostRegister(context.Context, *HostRegisterRequest) (*HostRegisterResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method HostRegister not implemented")
+func (UnimplementedPunchServiceServer) HostOnline(context.Context, *HostOnlineRequest) (*HostOnlineResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HostOnline not implemented")
 }
 func (UnimplementedPunchServiceServer) HostQuery(context.Context, *HostQueryRequest) (*HostQueryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method HostQuery not implemented")
@@ -318,9 +318,6 @@ func (UnimplementedPunchServiceServer) HostPunch(context.Context, *HostPunchRequ
 func (UnimplementedPunchServiceServer) HostMoved(context.Context, *HostMovedRequest) (*HostMovedResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method HostMoved not implemented")
 }
-func (UnimplementedPunchServiceServer) HostSubscribe(*HostSubscribeRequest, PunchService_HostSubscribeServer) error {
-	return status.Errorf(codes.Unimplemented, "method HostSubscribe not implemented")
-}
 
 // UnsafePunchServiceServer may be embedded to opt out of forward compatibility for this service.
 // Use of this interface is not recommended, as added methods to PunchServiceServer will
@@ -333,20 +330,20 @@ func RegisterPunchServiceServer(s grpc.ServiceRegistrar, srv PunchServiceServer)
 	s.RegisterService(&PunchService_ServiceDesc, srv)
 }
 
-func _PunchService_HostRegister_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(HostRegisterRequest)
+func _PunchService_HostOnline_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HostOnlineRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PunchServiceServer).HostRegister(ctx, in)
+		return srv.(PunchServiceServer).HostOnline(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: PunchService_HostRegister_FullMethodName,
+		FullMethod: PunchService_HostOnline_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PunchServiceServer).HostRegister(ctx, req.(*HostRegisterRequest))
+		return srv.(PunchServiceServer).HostOnline(ctx, req.(*HostOnlineRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -423,27 +420,6 @@ func _PunchService_HostMoved_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _PunchService_HostSubscribe_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(HostSubscribeRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(PunchServiceServer).HostSubscribe(m, &punchServiceHostSubscribeServer{stream})
-}
-
-type PunchService_HostSubscribeServer interface {
-	Send(*HostSubscribeResponse) error
-	grpc.ServerStream
-}
-
-type punchServiceHostSubscribeServer struct {
-	grpc.ServerStream
-}
-
-func (x *punchServiceHostSubscribeServer) Send(m *HostSubscribeResponse) error {
-	return x.ServerStream.SendMsg(m)
-}
-
 // PunchService_ServiceDesc is the grpc.ServiceDesc for PunchService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -452,8 +428,8 @@ var PunchService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*PunchServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "HostRegister",
-			Handler:    _PunchService_HostRegister_Handler,
+			MethodName: "HostOnline",
+			Handler:    _PunchService_HostOnline_Handler,
 		},
 		{
 			MethodName: "HostQuery",
@@ -472,239 +448,6 @@ var PunchService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _PunchService_HostMoved_Handler,
 		},
 	},
-	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "HostSubscribe",
-			Handler:       _PunchService_HostSubscribe_Handler,
-			ServerStreams: true,
-		},
-	},
-	Metadata: "api/v1/api.proto",
-}
-
-const (
-	PublisherService_AddTopic_FullMethodName    = "/api.PublisherService/AddTopic"
-	PublisherService_Publish_FullMethodName     = "/api.PublisherService/Publish"
-	PublisherService_Subscribe_FullMethodName   = "/api.PublisherService/Subscribe"
-	PublisherService_Unsubscribe_FullMethodName = "/api.PublisherService/Unsubscribe"
-)
-
-// PublisherServiceClient is the client API for PublisherService service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type PublisherServiceClient interface {
-	AddTopic(ctx context.Context, in *TopicRequest, opts ...grpc.CallOption) (*TopicResponse, error)
-	Publish(ctx context.Context, in *PublishRequest, opts ...grpc.CallOption) (*PublishResponse, error)
-	Subscribe(ctx context.Context, in *SubscribeRequest, opts ...grpc.CallOption) (PublisherService_SubscribeClient, error)
-	Unsubscribe(ctx context.Context, in *UnsubscribeRequest, opts ...grpc.CallOption) (*UnsubscribeResponse, error)
-}
-
-type publisherServiceClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewPublisherServiceClient(cc grpc.ClientConnInterface) PublisherServiceClient {
-	return &publisherServiceClient{cc}
-}
-
-func (c *publisherServiceClient) AddTopic(ctx context.Context, in *TopicRequest, opts ...grpc.CallOption) (*TopicResponse, error) {
-	out := new(TopicResponse)
-	err := c.cc.Invoke(ctx, PublisherService_AddTopic_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *publisherServiceClient) Publish(ctx context.Context, in *PublishRequest, opts ...grpc.CallOption) (*PublishResponse, error) {
-	out := new(PublishResponse)
-	err := c.cc.Invoke(ctx, PublisherService_Publish_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *publisherServiceClient) Subscribe(ctx context.Context, in *SubscribeRequest, opts ...grpc.CallOption) (PublisherService_SubscribeClient, error) {
-	stream, err := c.cc.NewStream(ctx, &PublisherService_ServiceDesc.Streams[0], PublisherService_Subscribe_FullMethodName, opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &publisherServiceSubscribeClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type PublisherService_SubscribeClient interface {
-	Recv() (*SubscribeResponse, error)
-	grpc.ClientStream
-}
-
-type publisherServiceSubscribeClient struct {
-	grpc.ClientStream
-}
-
-func (x *publisherServiceSubscribeClient) Recv() (*SubscribeResponse, error) {
-	m := new(SubscribeResponse)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func (c *publisherServiceClient) Unsubscribe(ctx context.Context, in *UnsubscribeRequest, opts ...grpc.CallOption) (*UnsubscribeResponse, error) {
-	out := new(UnsubscribeResponse)
-	err := c.cc.Invoke(ctx, PublisherService_Unsubscribe_FullMethodName, in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// PublisherServiceServer is the server API for PublisherService service.
-// All implementations should embed UnimplementedPublisherServiceServer
-// for forward compatibility
-type PublisherServiceServer interface {
-	AddTopic(context.Context, *TopicRequest) (*TopicResponse, error)
-	Publish(context.Context, *PublishRequest) (*PublishResponse, error)
-	Subscribe(*SubscribeRequest, PublisherService_SubscribeServer) error
-	Unsubscribe(context.Context, *UnsubscribeRequest) (*UnsubscribeResponse, error)
-}
-
-// UnimplementedPublisherServiceServer should be embedded to have forward compatible implementations.
-type UnimplementedPublisherServiceServer struct {
-}
-
-func (UnimplementedPublisherServiceServer) AddTopic(context.Context, *TopicRequest) (*TopicResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddTopic not implemented")
-}
-func (UnimplementedPublisherServiceServer) Publish(context.Context, *PublishRequest) (*PublishResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Publish not implemented")
-}
-func (UnimplementedPublisherServiceServer) Subscribe(*SubscribeRequest, PublisherService_SubscribeServer) error {
-	return status.Errorf(codes.Unimplemented, "method Subscribe not implemented")
-}
-func (UnimplementedPublisherServiceServer) Unsubscribe(context.Context, *UnsubscribeRequest) (*UnsubscribeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Unsubscribe not implemented")
-}
-
-// UnsafePublisherServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to PublisherServiceServer will
-// result in compilation errors.
-type UnsafePublisherServiceServer interface {
-	mustEmbedUnimplementedPublisherServiceServer()
-}
-
-func RegisterPublisherServiceServer(s grpc.ServiceRegistrar, srv PublisherServiceServer) {
-	s.RegisterService(&PublisherService_ServiceDesc, srv)
-}
-
-func _PublisherService_AddTopic_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TopicRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PublisherServiceServer).AddTopic(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: PublisherService_AddTopic_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PublisherServiceServer).AddTopic(ctx, req.(*TopicRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _PublisherService_Publish_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PublishRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PublisherServiceServer).Publish(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: PublisherService_Publish_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PublisherServiceServer).Publish(ctx, req.(*PublishRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _PublisherService_Subscribe_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(SubscribeRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(PublisherServiceServer).Subscribe(m, &publisherServiceSubscribeServer{stream})
-}
-
-type PublisherService_SubscribeServer interface {
-	Send(*SubscribeResponse) error
-	grpc.ServerStream
-}
-
-type publisherServiceSubscribeServer struct {
-	grpc.ServerStream
-}
-
-func (x *publisherServiceSubscribeServer) Send(m *SubscribeResponse) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func _PublisherService_Unsubscribe_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UnsubscribeRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PublisherServiceServer).Unsubscribe(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: PublisherService_Unsubscribe_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PublisherServiceServer).Unsubscribe(ctx, req.(*UnsubscribeRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-// PublisherService_ServiceDesc is the grpc.ServiceDesc for PublisherService service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var PublisherService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "api.PublisherService",
-	HandlerType: (*PublisherServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "AddTopic",
-			Handler:    _PublisherService_AddTopic_Handler,
-		},
-		{
-			MethodName: "Publish",
-			Handler:    _PublisherService_Publish_Handler,
-		},
-		{
-			MethodName: "Unsubscribe",
-			Handler:    _PublisherService_Unsubscribe_Handler,
-		},
-	},
-	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "Subscribe",
-			Handler:       _PublisherService_Subscribe_Handler,
-			ServerStreams: true,
-		},
-	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "api/v1/api.proto",
 }

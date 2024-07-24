@@ -10,7 +10,7 @@ var wgPool = sync.Pool{New: func() interface{} { return new(sync.WaitGroup) }}
 // NewPublisher creates a new pub/sub publisher to broadcast messages.
 // The duration is used as the send timeout as to not block the publisher publishing
 // messages to other clients if one client is slow or unresponsive.
-// The buffer is used when creating new channels for subscribers.
+// The buffer is used when creating new channels for topicSubscribers.
 func NewPublisher(publishTimeout time.Duration, buffer int) *publisher {
 	return &publisher{
 		buffer:      buffer,
@@ -30,7 +30,7 @@ type publisher struct {
 	subscribers map[subscriber]topicFunc
 }
 
-// Len returns the number of subscribers for the publisher
+// Len returns the number of topicSubscribers for the publisher
 func (p *publisher) Len() int {
 	p.m.RLock()
 	i := len(p.subscribers)
@@ -73,7 +73,7 @@ func (p *publisher) Evict(sub chan interface{}) {
 	p.m.Unlock()
 }
 
-// Publish sends the data in v to all subscribers currently registered with the publisher.
+// Publish sends the data in v to all topicSubscribers currently registered with the publisher.
 func (p *publisher) Publish(v interface{}) {
 	p.m.RLock()
 	if len(p.subscribers) == 0 {
@@ -91,7 +91,7 @@ func (p *publisher) Publish(v interface{}) {
 	p.m.RUnlock()
 }
 
-// Close closes the channels to all subscribers registered with the publisher.
+// Close closes the channels to all topicSubscribers registered with the publisher.
 func (p *publisher) Close() {
 	p.m.Lock()
 	for sub := range p.subscribers {
