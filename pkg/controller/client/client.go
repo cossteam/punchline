@@ -13,6 +13,8 @@ import (
 	"github.com/cossteam/punchline/pkg/transport/udp"
 	"github.com/cossteam/punchline/pkg/utils"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"net"
 	"time"
 )
@@ -80,7 +82,15 @@ func (cc *clientController) Start(ctx context.Context) error {
 		cc.logger.Error("Failed to create STUN client", zap.Error(err))
 		return err
 	}
+	defer cc.stunClient.Close()
 	cc.stunClient = stunClient
+
+	conn, err := grpc.NewClient(cc.c.Publisher.Addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	cc.punchClient = api.NewPunchServiceClient(conn)
 
 	if err := cc.InitAndSubscribe(); err != nil {
 		cc.logger.Error("Failed to init and subscribe", zap.Error(err))

@@ -117,6 +117,7 @@ func (sc *serverController) Start(ctx context.Context) error {
 		return err
 	}
 
+	api.RegisterPunchServiceServer(sc.server, sc)
 	api.RegisterPubSubServiceServer(sc.server, sc.pubSvc)
 
 	go func() {
