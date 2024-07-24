@@ -50,17 +50,17 @@ func applyConfig(ctx *cli.Context) (config2 *config.Config, err error) {
 	}
 
 	// Apply command line flags, overriding configuration file values
-	udpPort := ctx.Uint("udp_port")
+	udpPort := ctx.Uint("udpPort")
 	if udpPort != 0 {
 		cfg.UdpPort = udpPort
 	}
 
-	grpcPort := ctx.Uint("grpc_port")
+	grpcPort := ctx.Uint("grpcPort")
 	if grpcPort != 0 {
 		cfg.GrpcPort = grpcPort
 	}
 
-	endpointPort := ctx.Uint("endpoint_port")
+	endpointPort := ctx.Uint("endpointPort")
 	if endpointPort != 0 {
 		cfg.EndpointPort = endpointPort
 	}
