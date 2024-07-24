@@ -11,7 +11,7 @@ import (
 var _ api.PunchServiceServer = &serverController{}
 
 func (sc *serverController) HostOnline(ctx context.Context, request *api.HostOnlineRequest) (*api.HostOnlineResponse, error) {
-	sc.logger.Info("主机上线通知", zap.Any("request", request))
+	sc.logger.Debug("主机上线通知", zap.Any("request", request))
 
 	hostname := request.Hostname
 
@@ -52,8 +52,6 @@ func (sc *serverController) HostQuery(ctx context.Context, request *api.HostQuer
 }
 
 func (sc *serverController) HostUpdate(ctx context.Context, request *api.HostUpdateRequest) (*api.HostUpdateResponse, error) {
-	sc.logger.Info("主机更新通知", zap.Any("request", request))
-
 	hostname := request.Hostname
 
 	var hostInfo *host.HostInfo
@@ -93,7 +91,7 @@ func (sc *serverController) HostUpdate(ctx context.Context, request *api.HostUpd
 		return nil, err
 	}
 
-	sc.logger.Info("收到主机更新通知",
+	sc.logger.Debug("收到主机更新通知",
 		zap.String("handle", "HostUpdate"),
 		zap.Any("oldHm", request),
 		zap.Any("newHm", newHm),

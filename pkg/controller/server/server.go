@@ -172,80 +172,97 @@ func (sc *serverController) HandleRequest(addr *udp.Addr, p []byte) {
 }
 
 func (sc *serverController) handleHostUpdateNotification(hm *api.HostMessage, addr *udp.Addr, hostInfo *host.HostInfo) {
-	name := hm.Hostname
+	sc.logger.Warn("收到主机更新通知", zap.String("handle", "handleHostUpdateNotification"))
+	hostInfo.SetRemote(addr)
 
-	//hostInfo.SetRemote(addr)
-	//fmt.Println("hostInfo.Remote => ", hostInfo.Remote)
-	//fmt.Println("addr => ", addr)
-
-	oldAddr := hostInfo.Remotes.CopyAddrs()
-	//hostInfo.SetRemote(addr)
-
-	sc.Lock()
-	am := sc.unlockedGetRemoteList(name)
-	am.Lock()
-	sc.Unlock()
-	am.UnlockedSetV4(name, hm.Ipv4Addr)
-	am.UnlockedSetV6(name, hm.Ipv6Addr)
-	am.Unlock()
-	newAddr := am.CopyAddrs()
-
-	newHm := &api.HostMessage{}
-	found, ln, err := sc.queryAndPrepMessage(name, func(cache *host.Cache) (int, error) {
-		newHm.Type = api.HostMessage_HostPunchNotification
-		newHm.Hostname = name
-		newHm.ExternalAddr = hm.ExternalAddr
-		sc.coalesceAnswers(cache, newHm)
-		return newHm.MarshalTo(sc.p)
+	_, err := sc.HostUpdate(context.Background(), &api.HostUpdateRequest{
+		Hostname:     hm.Hostname,
+		Ipv4Addr:     hm.Ipv4Addr,
+		Ipv6Addr:     hm.Ipv6Addr,
+		ExternalAddr: api.NewIpv4Addr(addr.IP, uint32(addr.Port)),
 	})
-	if !found {
-		sc.logger.Debug("未找到主机信息", zap.String("name", name))
-		return
-	}
-
 	if err != nil {
-		sc.logger.Error("Failed to marshal lighthouse host query reply", zap.String("name", name))
+		sc.logger.Error("Failed to update host",
+			zap.String("hostname", hm.Hostname),
+			zap.Error(err),
+		)
 		return
 	}
 
-	sc.logger.Info("收到主机更新通知",
-		zap.String("handle", "handleHostUpdateNotification"),
-		zap.Any("oldHm", hm),
-		zap.Any("newHm", newHm),
-		zap.Any("oldAddr", oldAddr),
-		zap.Any("newAddr", newAddr),
-	)
-
-	//hm.Reset()
-	//hm.Type = api.HostMessage_None
-	//hm.Type = api.HostMessage_HostPunchNotification
-	//hm.Hostname = sc.hostname
-	//ln, err := hm.MarshalTo(sc.p)
-	//if err != nil {
-	//	sc.logger.Error("Failed to marshal lighthouse host update ack",
-	//		zap.String("hostname", hm.Hostname),
-	//	)
+	//name := hm.Hostname
+	//
+	////hostInfo.SetRemote(addr)
+	////fmt.Println("hostInfo.Remote => ", hostInfo.Remote)
+	////fmt.Println("addr => ", addr)
+	//
+	//oldAddr := hostInfo.Remotes.CopyAddrs()
+	////hostInfo.SetRemote(addr)
+	//
+	//sc.Lock()
+	//am := sc.unlockedGetRemoteList(name)
+	//am.Lock()
+	//sc.Unlock()
+	//am.UnlockedSetV4(name, hm.Ipv4Addr)
+	//am.UnlockedSetV6(name, hm.Ipv6Addr)
+	//am.Unlock()
+	//newAddr := am.CopyAddrs()
+	//
+	//newHm := &api.HostMessage{}
+	//found, ln, err := sc.queryAndPrepMessage(name, func(cache *host.Cache) (int, error) {
+	//	newHm.Type = api.HostMessage_HostPunchNotification
+	//	newHm.Hostname = name
+	//	newHm.ExternalAddr = hm.ExternalAddr
+	//	sc.coalesceAnswers(cache, newHm)
+	//	return newHm.MarshalTo(sc.p)
+	//})
+	//if !found {
+	//	sc.logger.Debug("未找到主机信息", zap.String("name", name))
 	//	return
 	//}
-
-	if hasAddressChanged(oldAddr, newAddr) {
-		sc.logger.Info("地址发送变化，开始推送",
-			zap.String("handle", "handleHostUpdateNotification"),
-			zap.Any("topic", name),
-			zap.Any("oldAddr", oldAddr),
-			zap.Any("newAddr", newAddr))
-
-		_, err = sc.Publish(context.Background(), &api.PublishRequest{
-			Topic: name,
-			Data:  sc.p[:ln],
-		})
-		if err != nil {
-			sc.logger.Error("Failed to publish lighthouse host update ack",
-				zap.String("hostname", hm.Hostname),
-				zap.Error(err),
-			)
-		}
-	}
+	//
+	//if err != nil {
+	//	sc.logger.Error("Failed to marshal lighthouse host query reply", zap.String("name", name))
+	//	return
+	//}
+	//
+	//sc.logger.Info("收到主机更新通知",
+	//	zap.String("handle", "handleHostUpdateNotification"),
+	//	zap.Any("oldHm", hm),
+	//	zap.Any("newHm", newHm),
+	//	zap.Any("oldAddr", oldAddr),
+	//	zap.Any("newAddr", newAddr),
+	//)
+	//
+	////hm.Reset()
+	////hm.Type = api.HostMessage_None
+	////hm.Type = api.HostMessage_HostPunchNotification
+	////hm.Hostname = sc.hostname
+	////ln, err := hm.MarshalTo(sc.p)
+	////if err != nil {
+	////	sc.logger.Error("Failed to marshal lighthouse host update ack",
+	////		zap.String("hostname", hm.Hostname),
+	////	)
+	////	return
+	////}
+	//
+	//if hasAddressChanged(oldAddr, newAddr) {
+	//	sc.logger.Info("地址发送变化，开始推送",
+	//		zap.String("handle", "handleHostUpdateNotification"),
+	//		zap.Any("topic", name),
+	//		zap.Any("oldAddr", oldAddr),
+	//		zap.Any("newAddr", newAddr))
+	//
+	//	_, err = sc.Publish(context.Background(), &api.PublishRequest{
+	//		Topic: name,
+	//		Data:  sc.p[:ln],
+	//	})
+	//	if err != nil {
+	//		sc.logger.Error("Failed to publish lighthouse host update ack",
+	//			zap.String("hostname", hm.Hostname),
+	//			zap.Error(err),
+	//		)
+	//	}
+	//}
 
 	//if err := sc.outside.WriteTo(sc.p[:ln], addr); err != nil {
 	//	sc.logger.Error("Failed to send lighthouse host update ack",

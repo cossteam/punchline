@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"github.com/cossteam/punchline/api/v1"
+	"github.com/cossteam/punchline/pkg/transport/udp"
 	"github.com/cossteam/punchline/pkg/utils"
 	"go.uber.org/zap"
 )
@@ -50,6 +51,35 @@ func (cc *clientController) SendUpdate() {
 
 	if _, err = cc.punchClient.HostUpdate(context.Background(), m); err != nil {
 		cc.logger.Error("Error while sending host update", zap.Error(err))
+	}
+
+	hm := &api.HostMessage{
+		Type:         api.HostMessage_HostUpdateNotification,
+		Hostname:     cc.hostname,
+		Ipv4Addr:     v4,
+		Ipv6Addr:     v6,
+		ExternalAddr: api.NewIpv4Addr(externalAddr.IP, uint32(externalAddr.Port)),
+	}
+
+	//out := make([]byte, mtu)
+	mm, err := hm.Marshal()
+	if err != nil {
+		cc.logger.Error("Error while marshaling for lighthouse update", zap.Error(err))
+		return
+	}
+
+	for _, v := range cc.coordinator {
+		if err := cc.makeupWriter.WriteTo(uint16(cc.listenPort), uint16(v.Port), mm, &udp.Addr{
+			IP:   v.IP,
+			Port: uint16(v.Port),
+		}); err != nil {
+			cc.logger.Error("Error while sending lighthouse update", zap.Error(err))
+			return
+		}
+		cc.logger.Debug("正在发送主机更新通知",
+			zap.Stringer("lighthouse", v),
+			zap.Any("msg", m))
+		//lc.interfaceController.EncWriter().SendToVpnIP(header.LightHouse, 0, lighthouse.VpnIp, mm, out)
 	}
 }
 
