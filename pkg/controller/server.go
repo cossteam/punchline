@@ -195,7 +195,7 @@ func (sc *serverController) handleHostUpdateNotification(hm *api.HostMessage, ad
 	found, ln, err := sc.queryAndPrepMessage(name, func(cache *host.Cache) (int, error) {
 		newHm.Type = api.HostMessage_HostPunchNotification
 		newHm.Hostname = name
-		*newHm.ExternalAddr = *hm.ExternalAddr
+		newHm.ExternalAddr = hm.ExternalAddr
 		sc.coalesceAnswers(cache, newHm)
 		return newHm.MarshalTo(sc.p)
 	})
