@@ -2,6 +2,7 @@ package host
 
 import (
 	"encoding/binary"
+	"fmt"
 	"github.com/cossteam/punchline/api/v1"
 	"github.com/cossteam/punchline/pkg/transport/udp"
 	"net"
@@ -127,6 +128,7 @@ func (r *RemoteList) ForEach(forEach func(addr *udp.Addr)) {
 // 它将标记去重后的地址列表为脏状态，因此仅在有新信息可用时调用它。
 // TODO: 需要支持允许列表
 func (r *RemoteList) LearnRemote(name string, addr *udp.Addr) {
+	fmt.Println("LearnRemote")
 	r.Lock()
 	defer r.Unlock()
 	if v4 := addr.IP.To4(); v4 != nil {

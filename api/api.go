@@ -7,8 +7,7 @@ type EncWriter interface {
 }
 
 type Runnable interface {
-	// Start starts running the component.  The component will stop running
-	// when the context is closed. Start blocks until the context is closed or
-	// an error occurs.
+	// Start 启动组件运行，当上下文关闭时，组件将停止运行。
+	// Start 方法会阻塞，直到上下文关闭或发生错误。
 	Start(context.Context) error
 }

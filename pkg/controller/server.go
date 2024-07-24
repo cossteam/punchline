@@ -146,17 +146,11 @@ func (sc *serverController) HandleRequest(addr *udp.Addr, p []byte) {
 		//TODO: send recv_error?
 		return
 	}
-	sc.logger.Info("Received lighthouse packet",
-		zap.Any("addr", addr),
-		zap.Any("p", p),
-		zap.Any("hm", hm),
-	)
 
 	var hostInfo *host.HostInfo
 	if hostInfo = sc.hostMap.GetHost(hm.Hostname); hostInfo == nil {
 		hostInfo = &host.HostInfo{
 			Name:    hm.Hostname,
-			Remote:  addr.Copy(),
 			Remotes: sc.unlockedGetRemoteList(hm.Hostname),
 		}
 		sc.hostMap.AddHost(hostInfo)
@@ -181,8 +175,12 @@ func (sc *serverController) HandleRequest(addr *udp.Addr, p []byte) {
 func (sc *serverController) handleHostUpdateNotification(hm *api.HostMessage, addr *udp.Addr, hostInfo *host.HostInfo) {
 	name := hm.Hostname
 
+	//hostInfo.SetRemote(addr)
+	fmt.Println("hostInfo.Remote => ", hostInfo.Remote)
+	fmt.Println("addr => ", addr)
+
 	oldAddr := hostInfo.Remotes.CopyAddrs()
-	hostInfo.SetRemote(addr)
+	//hostInfo.SetRemote(addr)
 
 	sc.Lock()
 	am := sc.unlockedGetRemoteList(name)
@@ -193,23 +191,42 @@ func (sc *serverController) handleHostUpdateNotification(hm *api.HostMessage, ad
 	am.Unlock()
 	newAddr := am.CopyAddrs()
 
-	sc.logger.Info("Received host update notification",
-		zap.Any("hm", hm),
+	newHm := &api.HostMessage{}
+	found, ln, err := sc.queryAndPrepMessage(name, func(cache *host.Cache) (int, error) {
+		newHm.Type = api.HostMessage_HostPunchNotification
+		newHm.Hostname = name
+		*newHm.ExternalAddr = *hm.ExternalAddr
+		sc.coalesceAnswers(cache, newHm)
+		return newHm.MarshalTo(sc.p)
+	})
+	if !found {
+		sc.logger.Debug("未找到主机信息", zap.String("name", name))
+		return
+	}
+
+	if err != nil {
+		sc.logger.Error("Failed to marshal lighthouse host query reply", zap.String("name", name))
+		return
+	}
+
+	sc.logger.Info("收到主机更新通知",
+		zap.Any("oldHm", hm),
+		zap.Any("newHm", newHm),
 		zap.Any("oldAddr", oldAddr),
 		zap.Any("newAddr", newAddr),
 	)
 
 	//hm.Reset()
 	//hm.Type = api.HostMessage_None
-	hm.Type = api.HostMessage_HostPunchNotification
+	//hm.Type = api.HostMessage_HostPunchNotification
 	//hm.Hostname = sc.hostname
-	ln, err := hm.MarshalTo(sc.p)
-	if err != nil {
-		sc.logger.Error("Failed to marshal lighthouse host update ack",
-			zap.String("hostname", hm.Hostname),
-		)
-		return
-	}
+	//ln, err := hm.MarshalTo(sc.p)
+	//if err != nil {
+	//	sc.logger.Error("Failed to marshal lighthouse host update ack",
+	//		zap.String("hostname", hm.Hostname),
+	//	)
+	//	return
+	//}
 
 	if hasAddressChanged(oldAddr, newAddr) {
 		sc.logger.Info("地址发送变化，开始推送",

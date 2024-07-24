@@ -120,6 +120,7 @@ message HostMessage {
     HostRegister = 6;
   }
   MessageType type = 1;
+  ipv4Addr external_addr = 2;
   repeated ipv4Addr ipv4_addr = 3;
   repeated ipv6Addr Ipv6_addr = 4;
   string hostname = 5;

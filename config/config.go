@@ -14,13 +14,15 @@ type Config struct {
 		Topic string `yaml:"topic"`
 	} `yaml:"subscriptions"`
 
-	UdpPort      uint   `yaml:"udp_port"`
-	GrpcPort     uint   `yaml:"grpc_port"`
-	EndpointPort uint   `yaml:"endpoint_port"` // 端点端口
+	UdpPort      uint   `yaml:"udpPort"`
+	GrpcPort     uint   `yaml:"grpcPort"`
+	EndpointPort uint   `yaml:"endpointPort"` // 端点端口
 	Server       string `yaml:"server"`
 	Loglevel     string `yaml:"loglevel"`
 	Addr         string `yaml:"addr"`
 	Hostname     string `yaml:"hostname"`
+
+	StunServer string `yaml:"stunServer"`
 }
 
 func Load(filename string) (*Config, error) {

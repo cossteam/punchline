@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"github.com/cossteam/punchline/config"
 	"github.com/urfave/cli/v2"
 	"os"
 	"os/signal"
@@ -38,3 +39,51 @@ func SetupSignalHandler() context.Context {
 }
 
 var shutdownSignals = []os.Signal{os.Interrupt, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT}
+
+func applyConfig(ctx *cli.Context) (config2 *config.Config, err error) {
+	cfg := &config.Config{}
+	if ctx.String("config") != "" {
+		cfg, err = config.Load(ctx.String("config"))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Apply command line flags, overriding configuration file values
+	udpPort := ctx.Uint("udp_port")
+	if udpPort != 0 {
+		cfg.UdpPort = udpPort
+	}
+
+	grpcPort := ctx.Uint("grpc_port")
+	if grpcPort != 0 {
+		cfg.GrpcPort = grpcPort
+	}
+
+	endpointPort := ctx.Uint("endpoint_port")
+	if endpointPort != 0 {
+		cfg.EndpointPort = endpointPort
+	}
+
+	logLevel := ctx.String("loglevel")
+	if logLevel != "" {
+		cfg.Loglevel = logLevel
+	}
+
+	hostname := ctx.String("hostname")
+	if hostname != "" {
+		cfg.Hostname = hostname
+	}
+
+	server := ctx.String("server")
+	if server != "" {
+		cfg.Server = server
+	}
+
+	stunServer := ctx.String("stunServer")
+	if stunServer != "" {
+		cfg.StunServer = stunServer
+	}
+
+	return cfg, nil
+}

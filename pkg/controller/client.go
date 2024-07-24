@@ -8,6 +8,7 @@ import (
 	"github.com/cossteam/punchline/config"
 	"github.com/cossteam/punchline/pkg/host"
 	"github.com/cossteam/punchline/pkg/publisher"
+	stunclient "github.com/cossteam/punchline/pkg/sutn"
 	"github.com/cossteam/punchline/pkg/transport/udp"
 	"go.uber.org/zap"
 	"net"
@@ -24,6 +25,7 @@ func NewClient(
 	coordinator []*net.UDPAddr,
 	c *config.Config,
 ) apiv1.Runnable {
+
 	return &clientController{
 		logger:       logger,
 		listenPort:   listenPort,
@@ -46,7 +48,8 @@ type clientController struct {
 
 	hostMap *host.HostMap
 
-	pubClient publisher.PublisherClient
+	stunClient stunclient.STUNClient
+	pubClient  publisher.PublisherClient
 }
 
 func (cc *clientController) Start(ctx context.Context) error {
@@ -61,6 +64,13 @@ func (cc *clientController) Start(ctx context.Context) error {
 		}
 		close(serverShutdown)
 	}()
+
+	stunClient, err := stunclient.NewClient(cc.c.StunServer)
+	if err != nil {
+		cc.logger.Error("Failed to create STUN client", zap.Error(err))
+		return err
+	}
+	cc.stunClient = stunClient
 
 	if err := cc.InitAndSubscribe(); err != nil {
 		return err
@@ -128,8 +138,17 @@ func (cc *clientController) handleSubscribe(message *publisher.Message) error {
 }
 
 func (cc *clientController) handleHostPunchNotification(hm *api.HostMessage) {
-	cc.logger.Debug("收到主机打洞通知", zap.Any("hm", hm))
-	empty := []byte{0}
+	cc.logger.Debug("收到主机打洞通知", zap.Any("hm", hm), zap.Any("makeupPort", cc.listenPort))
+	//empty := []byte{0}
+	newHm := &api.HostMessage{
+		Type:     api.HostMessage_None,
+		Hostname: "empty",
+	}
+	empty, err := newHm.Marshal()
+	if err != nil {
+		cc.logger.Error("Error while marshalling for lighthouse update", zap.Error(err))
+		return
+	}
 
 	punch := func(vpnPeer *udp.Addr) {
 		time.Sleep(time.Second)
@@ -174,12 +193,27 @@ func (cc *clientController) SendUpdate() {
 		}
 	}
 
+	addrs, err := cc.stunClient.ExternalAddrs()
+	if err != nil {
+		cc.logger.Error("Error while getting external addresses", zap.Error(err))
+	} else {
+		for _, a := range addrs {
+			v4 = append(v4, api.NewIpv4Addr(a.IP, uint32(a.Port)))
+		}
+	}
+
 	m := &api.HostMessage{
 		Type:     api.HostMessage_HostUpdateNotification,
 		Hostname: cc.hostname,
 		Ipv4Addr: v4,
 		Ipv6Addr: v6,
 	}
+
+	addr, err := cc.stunClient.ExternalAddr()
+	if err == nil {
+		m.ExternalAddr = api.NewIpv4Addr(addr.IP, uint32(addr.Port))
+	}
+
 	//out := make([]byte, mtu)
 	mm, err := m.Marshal()
 	if err != nil {
@@ -195,9 +229,9 @@ func (cc *clientController) SendUpdate() {
 			cc.logger.Error("Error while sending lighthouse update", zap.Error(err))
 			return
 		}
-		cc.logger.Debug("正在发送主机更新通知",
-			zap.Stringer("lighthouse", v),
-			zap.Any("msg", m))
+		//cc.logger.Debug("正在发送主机更新通知",
+		//	zap.Stringer("lighthouse", v),
+		//	zap.Any("msg", m))
 		//lc.interfaceController.EncWriter().SendToVpnIP(header.LightHouse, 0, lighthouse.VpnIp, mm, out)
 	}
 }
