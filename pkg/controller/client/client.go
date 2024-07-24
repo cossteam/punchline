@@ -82,7 +82,7 @@ func (cc *clientController) Start(ctx context.Context) error {
 		cc.logger.Error("Failed to create STUN client", zap.Error(err))
 		return err
 	}
-	defer cc.stunClient.Close()
+	defer stunClient.Close()
 	cc.stunClient = stunClient
 
 	conn, err := grpc.NewClient(cc.c.Publisher.Addr, grpc.WithTransportCredentials(insecure.NewCredentials()))

@@ -175,8 +175,8 @@ func (sc *serverController) handleHostUpdateNotification(hm *api.HostMessage, ad
 	name := hm.Hostname
 
 	//hostInfo.SetRemote(addr)
-	fmt.Println("hostInfo.Remote => ", hostInfo.Remote)
-	fmt.Println("addr => ", addr)
+	//fmt.Println("hostInfo.Remote => ", hostInfo.Remote)
+	//fmt.Println("addr => ", addr)
 
 	oldAddr := hostInfo.Remotes.CopyAddrs()
 	//hostInfo.SetRemote(addr)
@@ -209,6 +209,7 @@ func (sc *serverController) handleHostUpdateNotification(hm *api.HostMessage, ad
 	}
 
 	sc.logger.Info("收到主机更新通知",
+		zap.String("handle", "handleHostUpdateNotification"),
 		zap.Any("oldHm", hm),
 		zap.Any("newHm", newHm),
 		zap.Any("oldAddr", oldAddr),
@@ -229,6 +230,7 @@ func (sc *serverController) handleHostUpdateNotification(hm *api.HostMessage, ad
 
 	if hasAddressChanged(oldAddr, newAddr) {
 		sc.logger.Info("地址发送变化，开始推送",
+			zap.String("handle", "handleHostUpdateNotification"),
 			zap.Any("topic", name),
 			zap.Any("oldAddr", oldAddr),
 			zap.Any("newAddr", newAddr))

@@ -94,6 +94,7 @@ func (sc *serverController) HostUpdate(ctx context.Context, request *api.HostUpd
 	}
 
 	sc.logger.Info("收到主机更新通知",
+		zap.String("handle", "HostUpdate"),
 		zap.Any("oldHm", request),
 		zap.Any("newHm", newHm),
 		zap.Any("oldAddr", oldAddr),
@@ -114,6 +115,7 @@ func (sc *serverController) HostUpdate(ctx context.Context, request *api.HostUpd
 
 	if hasAddressChanged(oldAddr, newAddr) {
 		sc.logger.Info("地址发送变化，开始推送",
+			zap.String("handle", "HostUpdate"),
 			zap.Any("topic", hostname),
 		)
 
