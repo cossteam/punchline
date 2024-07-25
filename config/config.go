@@ -7,17 +7,14 @@ import (
 )
 
 type Config struct {
-	Publisher struct {
-		Name string `yaml:"name"`
-		Addr string `yaml:"addr"`
-	} `yaml:"publisher"`
 	Subscriptions []struct {
 		Topic string `yaml:"topic"`
 	} `yaml:"subscriptions"`
 
 	UdpPort      uint   `yaml:"udpPort"`
 	GrpcPort     uint   `yaml:"grpcPort"`
-	EndpointPort uint   `yaml:"endpointPort"` // 端点端口
+	EndpointPort uint   `yaml:"endpointPort"`
+	GrpcServer   string `yaml:"grpcServer"`
 	Server       string `yaml:"server"`
 	Loglevel     string `yaml:"loglevel"`
 	Addr         string `yaml:"addr"`

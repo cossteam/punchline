@@ -41,13 +41,13 @@ var Server = &cli.Command{
 		&cli.StringFlag{
 			Name:  "hostname",
 			Usage: "hostname",
-			Value: "server-1",
+			Value: "",
 		},
 		&cli.StringFlag{
-			Name:    "grpcPort",
-			Usage:   "grpcPort",
-			Aliases: []string{"gp"},
-			Value:   "7777",
+			Name:    "grpcServer",
+			Usage:   "grpcServer",
+			Aliases: []string{"gs"},
+			Value:   "0.0.0.0:7777",
 		},
 	},
 	Action: runServer,
@@ -83,8 +83,6 @@ func runServer(ctx *cli.Context) error {
 
 	srv := controllersrv.NewServerController(
 		logger.With(zap.String("controller", "server")),
-		uint32(c.GrpcPort),
-		c.Hostname,
 		outside,
 		c,
 	)

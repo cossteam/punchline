@@ -35,7 +35,7 @@ var Client = &cli.Command{
 		&cli.StringFlag{
 			Name:  "hostname",
 			Usage: "hostname",
-			Value: "",
+			Value: "client-1",
 		},
 		&cli.StringFlag{
 			Name:    "endpointPort",
@@ -54,6 +54,12 @@ var Client = &cli.Command{
 			Usage:   "stunServer",
 			Aliases: []string{"ss"},
 			Value:   "stun:stun.easyvoip.com:3478",
+		},
+		&cli.StringFlag{
+			Name:    "grpcServer",
+			Usage:   "grpcServer",
+			Aliases: []string{"gs"},
+			Value:   "",
 		},
 	},
 	Action: runClient,
@@ -92,6 +98,7 @@ func runClient(ctx *cli.Context) error {
 
 	client := controllerClient.NewClientController(
 		logger.With(zap.String("controller", "client")),
+		c.Hostname,
 		uint32(c.EndpointPort),
 		makeup,
 		coordinator,

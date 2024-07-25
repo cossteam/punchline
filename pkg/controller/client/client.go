@@ -23,6 +23,7 @@ var _ apiv1.Runnable = &clientController{}
 
 func NewClientController(
 	logger *zap.Logger,
+	hostname string,
 	listenPort uint32,
 	makeupWriter udp.MakeupWriter,
 	coordinator []*net.UDPAddr,
@@ -31,6 +32,7 @@ func NewClientController(
 ) apiv1.Runnable {
 	cc := &clientController{
 		logger:       logger,
+		hostname:     hostname,
 		listenPort:   listenPort,
 		makeupWriter: makeupWriter,
 		coordinator:  coordinator,
@@ -49,6 +51,8 @@ type clientController struct {
 	logger       *zap.Logger
 	listenPort   uint32
 	makeupWriter udp.MakeupWriter
+
+	hostname string
 
 	//punchConn udp.MakeupWriter
 	coordinator []*net.UDPAddr
@@ -82,7 +86,7 @@ func (cc *clientController) Start(ctx context.Context) error {
 	defer stunClient.Close()
 	cc.stunClient = stunClient
 
-	conn, err := grpc.NewClient(cc.c.Publisher.Addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(cc.c.GrpcServer, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return err
 	}
@@ -118,7 +122,7 @@ func (cc *clientController) Start(ctx context.Context) error {
 // InitAndSubscribe 初始化并订阅主题
 func (cc *clientController) InitAndSubscribe() error {
 	cc.logger.Info("Initializing publisher", zap.Any("subscriptions", cc.c.Subscriptions))
-	pubSubServiceClient, err := publisher.NewClient(cc.c.Publisher.Addr, publisher.WithClientName(cc.c.Hostname))
+	pubSubServiceClient, err := publisher.NewClient(cc.c.GrpcServer, publisher.WithClientName(cc.c.Hostname))
 	if err != nil {
 		return fmt.Errorf("failed to create publisher clientController: %w", err)
 	}

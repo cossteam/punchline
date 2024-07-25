@@ -55,9 +55,9 @@ func applyConfig(ctx *cli.Context) (config2 *config.Config, err error) {
 		cfg.UdpPort = udpPort
 	}
 
-	grpcPort := ctx.Uint("grpcPort")
-	if grpcPort != 0 {
-		cfg.GrpcPort = grpcPort
+	grpcServer := ctx.String("grpcServer")
+	if grpcServer != "" {
+		cfg.GrpcServer = grpcServer
 	}
 
 	endpointPort := ctx.Uint("endpointPort")

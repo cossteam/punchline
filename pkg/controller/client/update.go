@@ -36,6 +36,7 @@ func (cc *clientController) SendUpdate() {
 
 	hm := &api.HostMessage{
 		Type:     api.HostMessage_HostUpdateNotification,
+		Hostname: cc.hostname,
 		Ipv4Addr: v4,
 		Ipv6Addr: v6,
 		//ExternalAddr: api.NewIpv4Addr(externalAddr.IP, uint32(externalAddr.Port)),
@@ -50,9 +51,9 @@ func (cc *clientController) SendUpdate() {
 		cc.logger.Error("Error while getting single external address", zap.Error(err))
 	}
 
-	for _, p := range cc.plugins {
-		p.Handle(context.Background(), hm)
-	}
+	//for _, p := range cc.plugins {
+	//	p.Handle(context.Background(), hm)
+	//}
 
 	if _, err = cc.punchClient.HostUpdate(context.Background(), &api.HostUpdateRequest{
 		Hostname:     hm.Hostname,

@@ -1,0 +1,31 @@
+server: "<server>:6976"
+grpcServer: "<server>:7777"
+
+# 客户端标识，例如wireguard的publickey
+hostname: "client-1"
+
+# 需要打洞的端口，例如wireguard的listening port
+endpointPort: 58280
+
+# 订阅的主题列表
+# 每个主题对应一个其他客户端的主机名 (hostname)
+subscriptions:
+  - topic: "client2"
+  - topic: "client3"
+
+plugins:
+  - name: "wg"
+#    address: "127.0.0.1:6976"
+    spec:
+      iface: "wg0"
+#      interfaces:
+#        - iface: "wg0"
+#          publickey: client1
+#          port: 58281
+#          concern:
+#            - "client2"
+#        - iface: "wg1"
+#          publickey: client11
+#          port: 58282
+#          concern:
+#            - "client3"

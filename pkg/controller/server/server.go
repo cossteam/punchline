@@ -27,17 +27,14 @@ var (
 
 func NewServerController(
 	logger *zap.Logger,
-	listenPort uint32,
-	hostname string,
 	outside udp.Conn,
 	c *config.Config,
 ) apiv1.Runnable {
 	return &serverController{
-		server:     grpc.NewServer(),
-		logger:     logger,
-		listenPort: listenPort,
-		outside:    outside,
-		c:          c,
+		server:  grpc.NewServer(),
+		logger:  logger,
+		outside: outside,
+		c:       c,
 
 		pubSvc: publisher.NewPubsubService(logger),
 
@@ -51,10 +48,9 @@ func NewServerController(
 type serverController struct {
 	sync.RWMutex
 
-	c          *config.Config
-	logger     *zap.Logger
-	listenPort uint32
-	outside    udp.Conn
+	c       *config.Config
+	logger  *zap.Logger
+	outside udp.Conn
 
 	server    *grpc.Server
 	publisher publisher.Publisher
@@ -109,7 +105,8 @@ func (sc *serverController) Start(ctx context.Context) error {
 		sc.listenOutside()
 	}()
 
-	gaddr := fmt.Sprintf("0.0.0.0:%d", sc.listenPort)
+	//gaddr := fmt.Sprintf("0.0.0.0:%d", sc.listenPort)
+	gaddr := sc.c.GrpcServer
 	lis, err := net.Listen("tcp", gaddr)
 	if err != nil {
 		return err

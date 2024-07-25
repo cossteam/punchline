@@ -1,6 +1,7 @@
 package config
 
 type WgSpec struct {
+	Iface      string      `yaml:"iface"`
 	Interfaces []Interface `yaml:"interfaces"`
 }
 

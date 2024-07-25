@@ -18,4 +18,4 @@ gen: api/v1/api.proto
 
 .PHONY: build
 build: dep ## Build the binary file
-	GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=$(CGO_ENABLED) go build -ldflags "-s -w" -o pl-$(GOOS)-$(GOARCH) main.go
+	GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=$(CGO_ENABLED) go build -ldflags "-s -w" -o punchline main.go
