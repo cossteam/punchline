@@ -103,6 +103,57 @@ func (cc *clientController) SendUpdate() {
 	}
 }
 
+func (cc *clientController) createHostMessage() (*api.HostMessage, error) {
+	var v4 []*api.Ipv4Addr
+	var v6 []*api.Ipv6Addr
+
+	// 获取本地IP地址
+	localIps := utils.LocalIps()
+	for _, e := range *localIps {
+		if ip := e.To4(); ip != nil {
+			v4 = append(v4, api.NewIpv4Addr(e, cc.listenPort))
+		} else {
+			v6 = append(v6, api.NewIpv6Addr(e, cc.listenPort))
+		}
+	}
+
+	// 获取外部地址
+	externalAddrs, err := cc.stunClient.ExternalAddrs()
+	if err != nil {
+		cc.logger.Error("Error while getting external addresses", zap.Error(err))
+		return nil, err
+	} else {
+		for _, a := range externalAddrs {
+			if a.IP.To4() != nil {
+				v4 = append(v4, api.NewIpv4Addr(a.IP, uint32(a.Port)))
+			} else {
+				v6 = append(v6, api.NewIpv6Addr(a.IP, uint32(a.Port)))
+			}
+		}
+	}
+
+	// 创建 HostMessage
+	hm := &api.HostMessage{
+		Type:     api.HostMessage_HostUpdateNotification,
+		Hostname: cc.hostname,
+		Ipv4Addr: v4,
+		Ipv6Addr: v6,
+	}
+
+	// 获取单个外部地址
+	externalAddr, err := cc.stunClient.ExternalAddr()
+	if err != nil {
+		cc.logger.Error("Error while getting single external address", zap.Error(err))
+		return nil, err
+	}
+
+	if externalAddr.IP.To4() != nil {
+		hm.ExternalAddr = api.NewIpv4Addr(externalAddr.IP, uint32(externalAddr.Port))
+	}
+
+	return hm, nil
+}
+
 //func (cc *clientController) SendUpdate() {
 //	var v4 []*api.Ipv4Addr
 //	var v6 []*api.Ipv6Addr

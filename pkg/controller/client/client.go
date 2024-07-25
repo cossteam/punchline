@@ -98,6 +98,8 @@ func (cc *clientController) Start(ctx context.Context) error {
 		return err
 	}
 
+	go cc.sendHostOnline(ctx)
+
 	go func() {
 		clockSource := time.NewTicker(time.Second * time.Duration(30))
 		defer clockSource.Stop()
@@ -137,6 +139,25 @@ func (cc *clientController) InitAndSubscribe() error {
 	}
 
 	return nil
+}
+
+func (cc *clientController) sendHostOnline(ctx context.Context) {
+	message, err := cc.createHostMessage()
+	if err != nil {
+		cc.logger.Error("Failed to create host message", zap.Error(err))
+		return
+	}
+
+	_, err = cc.punchClient.HostOnline(ctx, &api.HostOnlineRequest{
+		Hostname:     message.Hostname,
+		Ipv4Addr:     message.Ipv4Addr,
+		Ipv6Addr:     message.Ipv6Addr,
+		ExternalAddr: message.ExternalAddr,
+	})
+	if err != nil {
+		cc.logger.Error("Failed to send host online", zap.Error(err))
+		return
+	}
 }
 
 func (cc *clientController) handleSubscribe(message *publisher.Message) error {
