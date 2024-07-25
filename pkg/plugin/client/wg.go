@@ -18,6 +18,8 @@ const (
 type WGPlugin struct {
 	logger *zap.Logger
 	c      *config.WgSpec
+
+	lastEndpoint string
 }
 
 // NewWGPlugin creates a new WGPlugin.
@@ -76,8 +78,19 @@ func (p *WGPlugin) handleHostUpdateNotification(ctx context.Context, msg *apiv1.
 }
 
 func (p *WGPlugin) handleHostPunchNotification(ctx context.Context, msg *apiv1.HostMessage) {
+
 	hostname := msg.Hostname
 	externalAddr := utils.NewUDPAddrFromLH4(msg.ExternalAddr).String()
+
+	if p.lastEndpoint != "" && p.lastEndpoint == externalAddr {
+		p.logger.Debug("Skip setting peer endpoint",
+			zap.String("interface", p.c.Iface),
+			zap.String("hostname", hostname),
+			zap.String("externalAddr", externalAddr))
+		return
+	}
+
+	p.lastEndpoint = externalAddr
 
 	if err := p.SetPeerEndpoint(p.c.Iface, hostname, externalAddr); err != nil {
 		p.logger.Error("Failed to set peer endpoint",

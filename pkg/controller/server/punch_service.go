@@ -111,23 +111,24 @@ func (sc *serverController) HostUpdate(ctx context.Context, request *api.HostUpd
 	//	return
 	//}
 
-	if hasAddressChanged(oldAddr, newAddr) {
-		sc.logger.Info("地址发送变化，开始推送",
-			zap.String("handle", "HostUpdate"),
-			zap.Any("topic", hostname),
-		)
+	// TODO 暂时每次都推送
+	//if hasAddressChanged(oldAddr, newAddr) {
+	//	sc.logger.Info("地址发送变化，开始推送",
+	//		zap.String("handle", "HostUpdate"),
+	//		zap.Any("topic", hostname),
+	//	)
 
-		_, err = sc.Publish(context.Background(), &api.PublishRequest{
-			Topic: hostname,
-			Data:  sc.p[:ln],
-		})
-		if err != nil {
-			sc.logger.Error("Failed to publish lighthouse host update ack",
-				zap.String("hostname", hostname),
-				zap.Error(err),
-			)
-		}
+	_, err = sc.Publish(context.Background(), &api.PublishRequest{
+		Topic: hostname,
+		Data:  sc.p[:ln],
+	})
+	if err != nil {
+		sc.logger.Error("Failed to publish lighthouse host update ack",
+			zap.String("hostname", hostname),
+			zap.Error(err),
+		)
 	}
+	//}
 
 	return &api.HostUpdateResponse{}, nil
 }
