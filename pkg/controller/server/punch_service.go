@@ -93,8 +93,8 @@ func (sc *serverController) HostUpdate(ctx context.Context, request *api.HostUpd
 
 	sc.logger.Debug("收到主机更新通知",
 		zap.String("handle", "HostUpdate"),
-		zap.Any("oldHm", request),
-		zap.Any("newHm", newHm),
+		//zap.Any("oldHm", request),
+		//zap.Any("newHm", newHm),
 		zap.Any("oldAddr", oldAddr),
 		zap.Any("newAddr", newAddr),
 	)

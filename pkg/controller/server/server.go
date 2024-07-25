@@ -170,7 +170,10 @@ func (sc *serverController) HandleRequest(addr *udp.Addr, p []byte) {
 }
 
 func (sc *serverController) handleHostUpdateNotification(hm *api.HostMessage, addr *udp.Addr, hostInfo *host.HostInfo) {
-	sc.logger.Warn("收到主机更新通知", zap.String("handle", "handleHostUpdateNotification"))
+	sc.logger.Warn("收到主机更新通知",
+		zap.String("handle", "handleHostUpdateNotification"),
+		zap.Stringer("addr", addr),
+	)
 	hostInfo.SetRemote(addr)
 
 	_, err := sc.HostUpdate(context.Background(), &api.HostUpdateRequest{
