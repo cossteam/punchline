@@ -72,24 +72,32 @@ func (p *WGPlugin) SetPeerEndpoint(iface string, peer string, endpoint string) e
 
 func (p *WGPlugin) handleHostUpdateNotification(ctx context.Context, msg *apiv1.HostMessage) {
 	// TODO 暂时默认第一个接口
-	msg.Hostname = p.c.Interfaces[0].Publickey
+	//msg.Hostname = p.c.Interfaces[0].Publickey
 }
 
 func (p *WGPlugin) handleHostPunchNotification(ctx context.Context, msg *apiv1.HostMessage) {
 	hostname := msg.Hostname
 	externalAddr := utils.NewUDPAddrFromLH4(msg.ExternalAddr).String()
 
-	for _, iface := range p.c.Interfaces {
-		if isConcerned(iface.Concern, hostname) {
-			if err := p.SetPeerEndpoint(iface.Iface, hostname, externalAddr); err != nil {
-				p.logger.Error("Failed to set peer endpoint",
-					zap.String("interface", iface.Iface),
-					zap.String("hostname", hostname),
-					zap.String("externalAddr", externalAddr),
-					zap.Error(err))
-			}
-		}
+	if err := p.SetPeerEndpoint(p.c.Iface, hostname, externalAddr); err != nil {
+		p.logger.Error("Failed to set peer endpoint",
+			zap.String("interface", p.c.Iface),
+			zap.String("hostname", hostname),
+			zap.String("externalAddr", externalAddr),
+			zap.Error(err))
 	}
+
+	//for _, iface := range p.c.Interfaces {
+	//	if isConcerned(iface.Concern, hostname) {
+	//		if err := p.SetPeerEndpoint(iface.Iface, hostname, externalAddr); err != nil {
+	//			p.logger.Error("Failed to set peer endpoint",
+	//				zap.String("interface", iface.Iface),
+	//				zap.String("hostname", hostname),
+	//				zap.String("externalAddr", externalAddr),
+	//				zap.Error(err))
+	//		}
+	//	}
+	//}
 }
 
 func run(cmd string, args ...string) (string, error) {

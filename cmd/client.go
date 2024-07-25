@@ -35,7 +35,7 @@ var Client = &cli.Command{
 		&cli.StringFlag{
 			Name:  "hostname",
 			Usage: "hostname",
-			Value: "client-1",
+			Value: "",
 		},
 		&cli.StringFlag{
 			Name:    "endpointPort",
@@ -71,7 +71,7 @@ func runClient(ctx *cli.Context) error {
 		return err
 	}
 
-	logger, err := log.SetupLogger(c.Loglevel)
+	logger, err := log.SetupLogger(c.Logging.Level)
 	if err != nil {
 		return err
 	}

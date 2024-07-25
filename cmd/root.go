@@ -50,10 +50,10 @@ func applyConfig(ctx *cli.Context) (config2 *config.Config, err error) {
 	}
 
 	// Apply command line flags, overriding configuration file values
-	udpPort := ctx.Uint("udpPort")
-	if udpPort != 0 {
-		cfg.UdpPort = udpPort
-	}
+	//udpPort := ctx.Uint("udpPort")
+	//if udpPort != 0 {
+	//	cfg.UdpPort = udpPort
+	//}
 
 	grpcServer := ctx.String("grpcServer")
 	if grpcServer != "" {
@@ -67,7 +67,7 @@ func applyConfig(ctx *cli.Context) (config2 *config.Config, err error) {
 
 	logLevel := ctx.String("loglevel")
 	if logLevel != "" {
-		cfg.Loglevel = logLevel
+		cfg.Logging.Level = logLevel
 	}
 
 	hostname := ctx.String("hostname")

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"github.com/cossteam/punchline/pkg/controller"
 	controllersrv "github.com/cossteam/punchline/pkg/controller/server"
 	"github.com/cossteam/punchline/pkg/log"
@@ -33,10 +32,10 @@ var Server = &cli.Command{
 			Value:   "debug",
 		},
 		&cli.StringFlag{
-			Name:    "udpPort",
-			Usage:   "udpPort",
-			Aliases: []string{"up"},
-			Value:   "6976",
+			Name:    "server",
+			Usage:   "server",
+			Aliases: []string{"srv"},
+			Value:   "0.0.0.0:6976",
 		},
 		&cli.StringFlag{
 			Name:  "hostname",
@@ -59,9 +58,9 @@ func runServer(ctx *cli.Context) error {
 		return err
 	}
 
-	uaddr := fmt.Sprintf("%s:%d", "0.0.0.0", c.UdpPort)
+	uaddr := c.Server
 
-	logger, err := log.SetupLogger(c.Loglevel)
+	logger, err := log.SetupLogger(c.Logging.Level)
 	if err != nil {
 		return err
 	}

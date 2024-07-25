@@ -13,6 +13,10 @@ subscriptions:
   - topic: "client2"
   - topic: "client3"
 
+logging:
+  # 日志级别 (debug info warn error dpanic panic fatal)
+  level: "debug"
+
 plugins:
   - name: "wg"
 #    address: "127.0.0.1:6976"

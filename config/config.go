@@ -11,16 +11,17 @@ type Config struct {
 		Topic string `yaml:"topic"`
 	} `yaml:"subscriptions"`
 
-	UdpPort      uint   `yaml:"udpPort"`
-	GrpcPort     uint   `yaml:"grpcPort"`
 	EndpointPort uint   `yaml:"endpointPort"`
 	GrpcServer   string `yaml:"grpcServer"`
 	Server       string `yaml:"server"`
-	Loglevel     string `yaml:"loglevel"`
 	Addr         string `yaml:"addr"`
 	Hostname     string `yaml:"hostname"`
 
 	StunServer string `yaml:"stunServer"`
+
+	Logging struct {
+		Level string `yaml:"level"`
+	} `yaml:"logging"`
 
 	Plugins []Plugin `yaml:"plugins"`
 }

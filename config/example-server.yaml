@@ -1,2 +1,6 @@
 grpcServer: "0.0.0.0:7777"
-#hostname: "server-1"
+server: "0.0.0.0:6976"
+
+logging:
+  # 日志级别 (debug info warn error dpanic panic fatal)
+  level: "debug"

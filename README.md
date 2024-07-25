@@ -17,6 +17,11 @@ punchline一个简单的udppunch hole
 make build
 ```
 
+### 赋予权限
+```
+chmod +x punchline
+```
+
 ### 服务器
 
 ```sh

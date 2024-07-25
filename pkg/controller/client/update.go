@@ -6,6 +6,7 @@ import (
 	"github.com/cossteam/punchline/pkg/transport/udp"
 	"github.com/cossteam/punchline/pkg/utils"
 	"go.uber.org/zap"
+	"net"
 )
 
 func (cc *clientController) SendUpdate() {
@@ -80,7 +81,7 @@ func (cc *clientController) SendUpdate() {
 			return
 		}
 
-		go func() {
+		go func(target *net.UDPAddr) {
 			var v4addr []*udp.Addr
 			for _, vv := range hm.Ipv4Addr {
 				v4addr = append(v4addr, utils.NewUDPAddrFromLH4(vv))
@@ -91,12 +92,12 @@ func (cc *clientController) SendUpdate() {
 			}
 
 			cc.logger.Debug("发送主机更新通知",
-				zap.Stringer("target", v),
+				zap.Stringer("target", target),
 				zap.Stringer("externalAddr", externalAddr),
 				zap.Any("v4Addr", v4addr),
 				zap.Any("v6Addr", v4addr),
 			)
-		}()
+		}(v)
 
 		//lc.interfaceController.EncWriter().SendToVpnIP(header.LightHouse, 0, lighthouse.VpnIp, mm, out)
 	}
