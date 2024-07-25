@@ -6,6 +6,7 @@ toolchain go1.22.0
 
 require (
 	github.com/gogo/protobuf v1.3.2
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pion/stun v0.6.1
 	github.com/stretchr/testify v1.8.4
 	github.com/urfave/cli/v2 v2.27.2

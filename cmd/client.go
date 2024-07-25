@@ -2,7 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/cossteam/punchline/pkg/controller/client"
+	"github.com/cossteam/punchline/pkg/controller"
+	controllerClient "github.com/cossteam/punchline/pkg/controller/client"
 	"github.com/cossteam/punchline/pkg/log"
 	plugin "github.com/cossteam/punchline/pkg/plugin/client"
 	"github.com/cossteam/punchline/pkg/transport/udp"
@@ -84,20 +85,24 @@ func runClient(ctx *cli.Context) error {
 		coordinator = append(coordinator, raddr)
 	}
 
-	p1 := plugin.NewShellCommandPlugin(
-		logger.With(zap.String("plugin", "shellcommand")),
-		"shellcommand",
-	)
+	ps, err := plugin.LoadPlugins(logger, c)
+	if err != nil {
+		return err
+	}
 
-	client := controller.NewClientController(
+	client := controllerClient.NewClientController(
 		logger.With(zap.String("controller", "client")),
 		uint32(c.EndpointPort),
 		c.Hostname,
 		makeup,
 		coordinator,
 		c,
-		controller.WithClientPlugin(p1),
+		controllerClient.WithClientPlugins(ps),
 	)
 
-	return client.Start(SetupSignalHandler())
+	ctrl := controller.NewManager(
+		logger.With(zap.String("controller", "manager")),
+		client,
+	)
+	return ctrl.Start(SetupSignalHandler())
 }

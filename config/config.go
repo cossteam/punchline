@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/mitchellh/mapstructure"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 )
@@ -23,6 +24,19 @@ type Config struct {
 	Hostname     string `yaml:"hostname"`
 
 	StunServer string `yaml:"stunServer"`
+
+	Plugins []Plugin `yaml:"plugins"`
+}
+
+type Plugin struct {
+	Name    string                 `yaml:"name"`
+	Address string                 `yaml:"address"`
+	Spec    map[string]interface{} `yaml:"spec"`
+}
+
+// LoadPluginConfig loads the specific configuration for a plugin
+func (p *Plugin) LoadPluginConfig(target interface{}) error {
+	return mapstructure.Decode(p.Spec, target)
 }
 
 func Load(filename string) (*Config, error) {

@@ -78,7 +78,8 @@ func (cc *clientController) SendUpdate() {
 		}
 		cc.logger.Debug("正在发送主机更新通知",
 			zap.Stringer("lighthouse", v),
-			zap.Any("msg", m))
+			zap.Stringer("ExternalAddr", externalAddr),
+			zap.Any("msg", hm))
 		//lc.interfaceController.EncWriter().SendToVpnIP(header.LightHouse, 0, lighthouse.VpnIp, mm, out)
 	}
 }

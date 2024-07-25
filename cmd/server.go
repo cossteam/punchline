@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/cossteam/punchline/pkg/controller"
 	controllersrv "github.com/cossteam/punchline/pkg/controller/server"
 	"github.com/cossteam/punchline/pkg/log"
+	plugin "github.com/cossteam/punchline/pkg/plugin/client"
 	"github.com/cossteam/punchline/pkg/transport/udp"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
@@ -74,10 +76,22 @@ func runServer(ctx *cli.Context) error {
 		return err
 	}
 
-	srv := controllersrv.NewServerController(logger.With(zap.String("controller", "server")), uint32(c.GrpcPort), c.Hostname, outside, c)
+	_, err = plugin.LoadPlugins(logger, c)
+	if err != nil {
+		return err
+	}
 
-	//var runnables []apiv1.Runnable
-	//runnables = append(runnables, srv)
+	srv := controllersrv.NewServerController(
+		logger.With(zap.String("controller", "server")),
+		uint32(c.GrpcPort),
+		c.Hostname,
+		outside,
+		c,
+	)
 
-	return srv.Start(SetupSignalHandler())
+	ctrl := controller.NewManager(
+		logger.With(zap.String("controller", "manager")),
+		srv,
+	)
+	return ctrl.Start(SetupSignalHandler())
 }
