@@ -36,7 +36,6 @@ func NewServerController(
 		server:     grpc.NewServer(),
 		logger:     logger,
 		listenPort: listenPort,
-		hostname:   hostname,
 		outside:    outside,
 		c:          c,
 
@@ -55,7 +54,6 @@ type serverController struct {
 	c          *config.Config
 	logger     *zap.Logger
 	listenPort uint32
-	hostname   string
 	outside    udp.Conn
 
 	server    *grpc.Server

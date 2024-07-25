@@ -34,31 +34,32 @@ func (cc *clientController) SendUpdate() {
 		}
 	}
 
-	m := &api.HostUpdateRequest{
-		Hostname: cc.hostname,
+	hm := &api.HostMessage{
+		Type:     api.HostMessage_HostUpdateNotification,
 		Ipv4Addr: v4,
 		Ipv6Addr: v6,
+		//ExternalAddr: api.NewIpv4Addr(externalAddr.IP, uint32(externalAddr.Port)),
 	}
 
 	externalAddr, err := cc.stunClient.ExternalAddr()
 	if err == nil {
 		if externalAddr.IP.To4() != nil {
-			m.ExternalAddr = api.NewIpv4Addr(externalAddr.IP, uint32(externalAddr.Port))
+			hm.ExternalAddr = api.NewIpv4Addr(externalAddr.IP, uint32(externalAddr.Port))
 		}
 	} else {
 		cc.logger.Error("Error while getting single external address", zap.Error(err))
 	}
 
-	if _, err = cc.punchClient.HostUpdate(context.Background(), m); err != nil {
-		cc.logger.Error("Error while sending host update", zap.Error(err))
+	for _, p := range cc.plugins {
+		p.Handle(context.Background(), hm)
 	}
 
-	hm := &api.HostMessage{
-		Type:         api.HostMessage_HostUpdateNotification,
-		Hostname:     cc.hostname,
-		Ipv4Addr:     v4,
-		Ipv6Addr:     v6,
-		ExternalAddr: api.NewIpv4Addr(externalAddr.IP, uint32(externalAddr.Port)),
+	if _, err = cc.punchClient.HostUpdate(context.Background(), &api.HostUpdateRequest{
+		Hostname: hm.Hostname,
+		Ipv4Addr: hm.Ipv4Addr,
+		Ipv6Addr: hm.Ipv6Addr,
+	}); err != nil {
+		cc.logger.Error("Error while sending host update", zap.Error(err))
 	}
 
 	//out := make([]byte, mtu)

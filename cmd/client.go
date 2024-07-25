@@ -93,7 +93,6 @@ func runClient(ctx *cli.Context) error {
 	client := controllerClient.NewClientController(
 		logger.With(zap.String("controller", "client")),
 		uint32(c.EndpointPort),
-		c.Hostname,
 		makeup,
 		coordinator,
 		c,

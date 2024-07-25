@@ -24,7 +24,6 @@ var _ apiv1.Runnable = &clientController{}
 func NewClientController(
 	logger *zap.Logger,
 	listenPort uint32,
-	hostname string,
 	makeupWriter udp.MakeupWriter,
 	coordinator []*net.UDPAddr,
 	c *config.Config,
@@ -33,7 +32,6 @@ func NewClientController(
 	cc := &clientController{
 		logger:       logger,
 		listenPort:   listenPort,
-		hostname:     hostname,
 		makeupWriter: makeupWriter,
 		coordinator:  coordinator,
 		c:            c,
@@ -50,7 +48,6 @@ type clientController struct {
 	c            *config.Config
 	logger       *zap.Logger
 	listenPort   uint32
-	hostname     string
 	makeupWriter udp.MakeupWriter
 
 	//punchConn udp.MakeupWriter

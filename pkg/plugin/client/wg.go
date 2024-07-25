@@ -35,19 +35,13 @@ func (p *WGPlugin) Name() string {
 
 // Handle executes the shell command when a message is received.
 func (p *WGPlugin) Handle(ctx context.Context, msg *apiv1.HostMessage) {
-	hostname := msg.Hostname
-	externalAddr := utils.NewUDPAddrFromLH4(msg.ExternalAddr).String()
 
-	for _, iface := range p.c.Interfaces {
-		if isConcerned(iface.Concern, hostname) {
-			if err := p.SetPeerEndpoint(iface.Iface, hostname, externalAddr); err != nil {
-				p.logger.Error("Failed to set peer endpoint",
-					zap.String("interface", iface.Iface),
-					zap.String("hostname", hostname),
-					zap.String("externalAddr", externalAddr),
-					zap.Error(err))
-			}
-		}
+	switch msg.Type {
+	case apiv1.HostMessage_HostUpdateNotification:
+		p.handleHostUpdateNotification(ctx, msg)
+	case apiv1.HostMessage_HostPunchNotification:
+		// TODO 暂时使用这个类型，后续需要修改
+		p.handleHostPunchNotification(ctx, msg)
 	}
 }
 
@@ -75,6 +69,28 @@ func (p *WGPlugin) SetPeerEndpoint(iface string, peer string, endpoint string) e
 		p.logger.Info("shell command executed successfully", zap.String("cmd", strings.Join(cmd, " ")), zap.String("output", output))
 	}
 	return nil
+}
+
+func (p *WGPlugin) handleHostUpdateNotification(ctx context.Context, msg *apiv1.HostMessage) {
+	// TODO 暂时默认第一个接口
+	msg.Hostname = p.c.Interfaces[0].Hostname
+}
+
+func (p *WGPlugin) handleHostPunchNotification(ctx context.Context, msg *apiv1.HostMessage) {
+	hostname := msg.Hostname
+	externalAddr := utils.NewUDPAddrFromLH4(msg.ExternalAddr).String()
+
+	for _, iface := range p.c.Interfaces {
+		if isConcerned(iface.Concern, hostname) {
+			if err := p.SetPeerEndpoint(iface.Iface, hostname, externalAddr); err != nil {
+				p.logger.Error("Failed to set peer endpoint",
+					zap.String("interface", iface.Iface),
+					zap.String("hostname", hostname),
+					zap.String("externalAddr", externalAddr),
+					zap.Error(err))
+			}
+		}
+	}
 }
 
 func run(cmd string, args ...string) (string, error) {
