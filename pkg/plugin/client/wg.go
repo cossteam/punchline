@@ -35,7 +35,7 @@ func (p *WGPlugin) Name() string {
 
 // Handle executes the shell command when a message is received.
 func (p *WGPlugin) Handle(ctx context.Context, msg *apiv1.HostMessage) {
-
+	p.logger.Debug("Received message", zap.Any("message", msg))
 	switch msg.Type {
 	case apiv1.HostMessage_HostUpdateNotification:
 		p.handleHostUpdateNotification(ctx, msg)

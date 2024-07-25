@@ -55,9 +55,10 @@ func (cc *clientController) SendUpdate() {
 	}
 
 	if _, err = cc.punchClient.HostUpdate(context.Background(), &api.HostUpdateRequest{
-		Hostname: hm.Hostname,
-		Ipv4Addr: hm.Ipv4Addr,
-		Ipv6Addr: hm.Ipv6Addr,
+		Hostname:     hm.Hostname,
+		Ipv4Addr:     hm.Ipv4Addr,
+		Ipv6Addr:     hm.Ipv6Addr,
+		ExternalAddr: hm.ExternalAddr,
 	}); err != nil {
 		cc.logger.Error("Error while sending host update", zap.Error(err))
 	}
