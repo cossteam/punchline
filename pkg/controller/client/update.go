@@ -78,10 +78,25 @@ func (cc *clientController) SendUpdate() {
 			cc.logger.Error("Error while sending lighthouse update", zap.Error(err))
 			return
 		}
-		cc.logger.Debug("正在发送主机更新通知",
-			zap.Stringer("lighthouse", v),
-			zap.Stringer("ExternalAddr", externalAddr),
-			zap.Any("msg", hm))
+
+		go func() {
+			var v4addr []*udp.Addr
+			for _, vv := range hm.Ipv4Addr {
+				v4addr = append(v4addr, utils.NewUDPAddrFromLH4(vv))
+			}
+			var v6addr []*udp.Addr
+			for _, vv := range hm.Ipv6Addr {
+				v6addr = append(v6addr, utils.NewUDPAddrFromLH6(vv))
+			}
+
+			cc.logger.Debug("发送主机更新通知",
+				zap.Stringer("target", v),
+				zap.Stringer("externalAddr", externalAddr),
+				zap.Any("v4Addr", v4addr),
+				zap.Any("v6Addr", v4addr),
+			)
+		}()
+
 		//lc.interfaceController.EncWriter().SendToVpnIP(header.LightHouse, 0, lighthouse.VpnIp, mm, out)
 	}
 }

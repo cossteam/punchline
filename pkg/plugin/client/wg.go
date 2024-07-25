@@ -35,7 +35,6 @@ func (p *WGPlugin) Name() string {
 
 // Handle executes the shell command when a message is received.
 func (p *WGPlugin) Handle(ctx context.Context, msg *apiv1.HostMessage) {
-	p.logger.Debug("Received message", zap.Any("message", msg))
 	switch msg.Type {
 	case apiv1.HostMessage_HostUpdateNotification:
 		p.handleHostUpdateNotification(ctx, msg)
@@ -66,14 +65,14 @@ func (p *WGPlugin) SetPeerEndpoint(iface string, peer string, endpoint string) e
 	if err != nil {
 		p.logger.Error("failed to execute shell command", zap.Error(err), zap.String("cmd", strings.Join(cmd, " ")), zap.String("output", output))
 	} else {
-		p.logger.Info("shell command executed successfully", zap.String("cmd", strings.Join(cmd, " ")), zap.String("output", output))
+		p.logger.Info("Shell command executed successfully", zap.String("cmd", strings.Join(cmd, " ")), zap.String("output", output))
 	}
 	return nil
 }
 
 func (p *WGPlugin) handleHostUpdateNotification(ctx context.Context, msg *apiv1.HostMessage) {
 	// TODO 暂时默认第一个接口
-	msg.Hostname = p.c.Interfaces[0].Hostname
+	msg.Hostname = p.c.Interfaces[0].Publickey
 }
 
 func (p *WGPlugin) handleHostPunchNotification(ctx context.Context, msg *apiv1.HostMessage) {

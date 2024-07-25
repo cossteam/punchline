@@ -5,8 +5,8 @@ type WgSpec struct {
 }
 
 type Interface struct {
-	Iface    string   `yaml:"iface"`
-	Hostname string   `yaml:"hostname"`
-	Port     int      `yaml:"port"`
-	Concern  []string `yaml:"concern"`
+	Iface     string   `yaml:"iface"`
+	Publickey string   `yaml:"publickey"`
+	Port      int      `yaml:"port"`
+	Concern   []string `yaml:"concern"`
 }
