@@ -171,21 +171,21 @@ func (sc *serverController) handleHostUpdateNotification(hm *api.HostMessage, ad
 		zap.String("handle", "handleHostUpdateNotification"),
 		zap.Stringer("addr", addr),
 	)
-	//hostInfo.SetRemote(addr)
+	hostInfo.SetRemote(addr)
 
-	//_, err := sc.HostUpdate(context.Background(), &api.HostUpdateRequest{
-	//	Hostname:     hm.Hostname,
-	//	Ipv4Addr:     hm.Ipv4Addr,
-	//	Ipv6Addr:     hm.Ipv6Addr,
-	//	ExternalAddr: api.NewIpv4Addr(addr.IP, uint32(addr.Port)),
-	//})
-	//if err != nil {
-	//	sc.logger.Error("Failed to update host",
-	//		zap.String("hostname", hm.Hostname),
-	//		zap.Error(err),
-	//	)
-	//	return
-	//}
+	_, err := sc.HostUpdate(context.Background(), &api.HostUpdateRequest{
+		Hostname:     hm.Hostname,
+		Ipv4Addr:     hm.Ipv4Addr,
+		Ipv6Addr:     hm.Ipv6Addr,
+		ExternalAddr: api.NewIpv4Addr(addr.IP, uint32(addr.Port)),
+	})
+	if err != nil {
+		sc.logger.Error("Failed to update host",
+			zap.String("hostname", hm.Hostname),
+			zap.Error(err),
+		)
+		return
+	}
 
 	//name := hm.Hostname
 	//

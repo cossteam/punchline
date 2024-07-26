@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"context"
 	"github.com/cossteam/punchline/api/v1"
 	"github.com/cossteam/punchline/pkg/transport/udp"
 	"github.com/cossteam/punchline/pkg/utils"
@@ -56,14 +55,14 @@ func (cc *clientController) SendUpdate() {
 	//	p.Handle(context.Background(), hm)
 	//}
 
-	if _, err = cc.punchClient.HostUpdate(context.Background(), &api.HostUpdateRequest{
-		Hostname:     hm.Hostname,
-		Ipv4Addr:     hm.Ipv4Addr,
-		Ipv6Addr:     hm.Ipv6Addr,
-		ExternalAddr: hm.ExternalAddr,
-	}); err != nil {
-		cc.logger.Error("Error while sending host update", zap.Error(err))
-	}
+	//if _, err = cc.punchClient.HostUpdate(context.Background(), &api.HostUpdateRequest{
+	//	Hostname:     hm.Hostname,
+	//	Ipv4Addr:     hm.Ipv4Addr,
+	//	Ipv6Addr:     hm.Ipv6Addr,
+	//	ExternalAddr: hm.ExternalAddr,
+	//}); err != nil {
+	//	cc.logger.Error("Error while sending host update", zap.Error(err))
+	//}
 
 	//out := make([]byte, mtu)
 	mm, err := hm.Marshal()
