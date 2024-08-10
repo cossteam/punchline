@@ -14,10 +14,10 @@ import (
 
 func main() {
 	// 使用 flag 来指定信令服务器地址
-	serverAddr := flag.String("addr", "ws://localhost:8080/ws", "signaling server address")
+	serverAddr := flag.String("addr", "localhost:8080", "signaling server address")
 	flag.Parse()
 
-	conn, _, err := websocket.DefaultDialer.Dial(*serverAddr, nil)
+	conn, _, err := websocket.DefaultDialer.Dial("ws://"+*serverAddr+"/ws", nil)
 	if err != nil {
 		log.Fatal("dial:", err)
 	}
