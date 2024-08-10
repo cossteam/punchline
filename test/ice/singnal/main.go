@@ -21,6 +21,7 @@ var addr string
 
 func init() {
 	flag.StringVar(&addr, "addr", ":18080", "address to listen on")
+	flag.Parse()
 }
 
 func main() {

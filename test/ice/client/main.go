@@ -14,10 +14,11 @@ var server string
 
 func init() {
 	flag.StringVar(&server, "server", "localhost:18080", "address to listen on")
+	flag.Parse()
 }
 
 func main() {
-	conn, _, err := websocket.DefaultDialer.Dial(server, nil)
+	conn, _, err := websocket.DefaultDialer.Dial("ws://"+server+"/ws", nil)
 	if err != nil {
 		log.Fatal("dial:", err)
 	}
