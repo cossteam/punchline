@@ -86,7 +86,7 @@ func (cc *clientController) Start(ctx context.Context) error {
 	defer stunClient.Close()
 	cc.stunClient = stunClient
 
-	conn, err := grpc.NewClient(cc.c.GrpcServer, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(cc.c.SignalServer, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return err
 	}
@@ -124,7 +124,7 @@ func (cc *clientController) Start(ctx context.Context) error {
 // InitAndSubscribe 初始化并订阅主题
 func (cc *clientController) InitAndSubscribe() error {
 	cc.logger.Info("Initializing publisher", zap.Any("subscriptions", cc.c.Subscriptions))
-	pubSubServiceClient, err := publisher.NewClient(cc.c.GrpcServer, publisher.WithClientName(cc.c.Hostname))
+	pubSubServiceClient, err := publisher.NewClient(cc.c.SignalServer, publisher.WithClientName(cc.c.Hostname))
 	if err != nil {
 		return fmt.Errorf("failed to create publisher clientController: %w", err)
 	}

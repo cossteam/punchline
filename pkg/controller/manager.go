@@ -24,7 +24,7 @@ type Manager struct {
 func NewManager(logger *zap.Logger, runnables ...Runnable) *Manager {
 	return &Manager{
 		runnables: runnables,
-		logger:    logger,
+		logger:    logger.With(zap.String("controller", "manager")),
 	}
 }
 

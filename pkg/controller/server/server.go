@@ -3,7 +3,6 @@ package controller
 import (
 	"context"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	apiv1 "github.com/cossteam/punchline/api"
 	"github.com/cossteam/punchline/api/v1"
@@ -12,8 +11,6 @@ import (
 	"github.com/cossteam/punchline/pkg/publisher"
 	"github.com/cossteam/punchline/pkg/transport/udp"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
-	"net"
 	"sync"
 )
 
@@ -31,7 +28,7 @@ func NewServerController(
 	c *config.Config,
 ) apiv1.Runnable {
 	return &serverController{
-		server:  grpc.NewServer(),
+		//server:  grpc.NewServer(),
 		logger:  logger,
 		outside: outside,
 		c:       c,
@@ -52,7 +49,6 @@ type serverController struct {
 	logger  *zap.Logger
 	outside udp.Conn
 
-	server    *grpc.Server
 	publisher publisher.Publisher
 	pubSvc    api.PubSubServiceServer
 
@@ -91,7 +87,7 @@ func (sc *serverController) Start(ctx context.Context) error {
 		if err := sc.outside.Close(); err != nil {
 			sc.logger.Error("Failed to close Server", zap.Error(err))
 		}
-		sc.server.Stop()
+		//sc.server.Stop()
 		close(serverShutdown)
 	}()
 
@@ -106,22 +102,22 @@ func (sc *serverController) Start(ctx context.Context) error {
 	}()
 
 	//gaddr := fmt.Sprintf("0.0.0.0:%d", sc.listenPort)
-	gaddr := sc.c.GrpcServer
-	lis, err := net.Listen("tcp", gaddr)
-	if err != nil {
-		return err
-	}
+	//gaddr := sc.c.SignalServer
+	//lis, err := net.Listen("tcp", gaddr)
+	//if err != nil {
+	//	return err
+	//}
 
-	api.RegisterPunchServiceServer(sc.server, sc)
-	api.RegisterPubSubServiceServer(sc.server, sc.pubSvc)
+	//api.RegisterPunchServiceServer(sc.server, sc)
+	//api.RegisterPubSubServiceServer(sc.server, sc.pubSvc)
 
 	go func() {
-		sc.logger.Info("Starting grpcServer", zap.Any("addr", gaddr))
-		if err := sc.server.Serve(lis); err != nil {
-			if !errors.Is(err, grpc.ErrServerStopped) {
-				sc.logger.Error("Failed to serve grpcServer", zap.Error(err))
-			}
-		}
+		//sc.logger.Info("Starting grpcServer", zap.Any("addr", gaddr))
+		//if err := sc.server.Serve(lis); err != nil {
+		//	if !errors.Is(err, grpc.ErrServerStopped) {
+		//		sc.logger.Error("Failed to serve grpcServer", zap.Error(err))
+		//	}
+		//}
 	}()
 
 	<-serverShutdown

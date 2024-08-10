@@ -37,24 +37,6 @@ func (ps *PubsubService) Unsubscribe(ctx context.Context, request *api.Unsubscri
 		ps.unsubCh <- ch
 	})
 
-	//ps.mu.Lock()
-	//defer ps.mu.Unlock()
-	//
-	//if subscribers, ok := ps.topicSubscribers[request.Topic]; ok {
-	//	if ch, ok := subscribers[request.Hostname]; ok {
-	//		delete(subscribers, request.Hostname)
-	//		ps.unsubCh <- ch
-	//		if len(subscribers) == 0 {
-	//			delete(ps.topicSubscribers, request.Topic)
-	//		}
-	//		ps.logger.Debug("取消订阅成功", zap.String("topic", request.Topic), zap.String("hostname", request.Hostname))
-	//	} else {
-	//		ps.logger.Warn("未找到订阅者", zap.String("topic", request.Topic), zap.String("hostname", request.Hostname))
-	//	}
-	//} else {
-	//	ps.logger.Warn("未找到主题订阅", zap.String("topic", request.Topic))
-	//}
-
 	return &api.UnsubscribeResponse{}, nil
 }
 

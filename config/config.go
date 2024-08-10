@@ -12,7 +12,7 @@ type Config struct {
 	} `yaml:"subscriptions"`
 
 	EndpointPort uint   `yaml:"endpointPort"`
-	GrpcServer   string `yaml:"grpcServer"`
+	SignalServer string `yaml:"signalServer"`
 	Server       string `yaml:"server"`
 	Addr         string `yaml:"addr"`
 	Hostname     string `yaml:"hostname"`

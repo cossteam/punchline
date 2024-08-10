@@ -24,8 +24,9 @@ func (sc *serverController) HostOnline(ctx context.Context, request *api.HostOnl
 		return newHm.MarshalTo(sc.p)
 	})
 	if !found {
-		sc.logger.Debug("未找到主机信息", zap.String("name", hostname))
-		return nil, err
+		sc.GetOrCreateHostInfo(hostname)
+		//sc.logger.Debug("未找到主机信息", zap.String("name", hostname))
+		//return nil, err
 	}
 	if err != nil {
 		sc.logger.Error("Failed to marshal lighthouse host query reply", zap.String("name", hostname))
