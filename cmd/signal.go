@@ -34,10 +34,10 @@ var Signal = &cli.Command{
 			Value: "0.0.0.0:7777",
 		},
 	},
-	Action: signal,
+	Action: runSignal,
 }
 
-func signal(ctx *cli.Context) error {
+func runSignal(ctx *cli.Context) error {
 	c, err := applyConfig(ctx)
 	if err != nil {
 		return err
