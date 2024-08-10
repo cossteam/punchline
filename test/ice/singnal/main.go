@@ -17,20 +17,17 @@ var upgrader = websocket.Upgrader{
 var clients = make(map[*websocket.Conn]bool)
 var broadcast = make(chan []byte)
 
-var addr string
-
-func init() {
-	flag.StringVar(&addr, "addr", ":18080", "address to listen on")
-	flag.Parse()
-}
-
 func main() {
+	// 使用 flag 来指定监听地址
+	address := flag.String("addr", ":8080", "http service address")
+	flag.Parse()
+
 	http.HandleFunc("/ws", handleConnections)
 
 	go handleMessages()
 
-	log.Println("Signaling server started on :8080")
-	err := http.ListenAndServe(addr, nil)
+	log.Printf("Signaling server started on %s\n", *address)
+	err := http.ListenAndServe(*address, nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}

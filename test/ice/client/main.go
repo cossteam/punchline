@@ -3,22 +3,21 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/gorilla/websocket"
-	"github.com/pion/ice/v2"
 	"log"
 	"os"
 	"os/signal"
+	"time"
+
+	"github.com/gorilla/websocket"
+	"github.com/pion/ice/v2"
 )
 
-var server string
-
-func init() {
-	flag.StringVar(&server, "server", "localhost:18080", "address to listen on")
-	flag.Parse()
-}
-
 func main() {
-	conn, _, err := websocket.DefaultDialer.Dial("ws://"+server+"/ws", nil)
+	// 使用 flag 来指定信令服务器地址
+	serverAddr := flag.String("addr", "ws://localhost:8080/ws", "signaling server address")
+	flag.Parse()
+
+	conn, _, err := websocket.DefaultDialer.Dial(*serverAddr, nil)
 	if err != nil {
 		log.Fatal("dial:", err)
 	}
@@ -30,24 +29,24 @@ func main() {
 	}
 
 	// 处理候选者收集事件
-	if err := agent.OnCandidate(func(c ice.Candidate) {
+	agent.OnCandidate(func(c ice.Candidate) {
 		if c != nil {
 			fmt.Println("Discovered new candidate:", c.String())
-			conn.WriteMessage(websocket.TextMessage, []byte(c.Marshal()))
+			err := conn.WriteMessage(websocket.TextMessage, []byte(c.Marshal()))
+			if err != nil {
+				log.Println("write:", err)
+			}
 		}
-	}); err != nil {
-		panic(err)
-	}
+	})
 
 	// 处理ICE连接状态改变事件
-	if err := agent.OnConnectionStateChange(func(state ice.ConnectionState) {
+	agent.OnConnectionStateChange(func(state ice.ConnectionState) {
 		fmt.Println("Connection State has changed:", state.String())
 		if state == ice.ConnectionStateConnected {
 			fmt.Println("Connected to remote peer")
+			go sendMessage(agent)
 		}
-	}); err != nil {
-		panic(err)
-	}
+	})
 
 	// 监听信令服务器的消息
 	go func() {
@@ -57,7 +56,6 @@ func main() {
 				log.Println("read:", err)
 				return
 			}
-			// 从字符串反序列化回候选者对象
 			candidate, err := ice.UnmarshalCandidate(string(message))
 			if err != nil {
 				log.Println("unmarshal:", err)
@@ -84,4 +82,15 @@ func main() {
 	fmt.Println("Exiting...")
 	agent.Close()
 	conn.Close()
+}
+
+func sendMessage(agent *ice.Agent) {
+	for {
+		time.Sleep(5 * time.Second)
+		err := agent.Send([]byte("Hello from client!"))
+		if err != nil {
+			log.Println("send error:", err)
+			return
+		}
+	}
 }
