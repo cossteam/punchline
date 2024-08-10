@@ -58,8 +58,9 @@ func (sc *SignalingController) Start(ctx context.Context) error {
 		return err
 	}
 
+	sc.logger.Info("Starting SignalingServer", zap.Any("addr", gaddr))
+
 	go func() {
-		sc.logger.Info("Starting SignalingServer", zap.Any("addr", gaddr))
 		if err := sc.server.Serve(lis); err != nil {
 			if !errors.Is(err, grpc.ErrServerStopped) {
 				sc.logger.Error("Failed to serve SignalingServer", zap.Error(err))
@@ -85,11 +86,10 @@ func (sc *SignalingController) Unsubscribe(ctx context.Context, request *api.Uns
 }
 
 func (sc *SignalingController) Publish(ctx context.Context, req *signaling.PublishRequest) (*signaling.PublishResponse, error) {
-	sc.logger.Debug("收到发布请求", zap.String("topic", req.Topic))
+	sc.logger.Debug("收到发布请求", zap.String("topic", req.Topic), zap.Any("candidate", req.Candidate))
 	sc.pub.Publish(&api.Message{
 		Topic: req.Topic,
-		//Event: req.Event,
-		Data: req.Data,
+		Data:  req.Data,
 	})
 	return &signaling.PublishResponse{}, nil
 }

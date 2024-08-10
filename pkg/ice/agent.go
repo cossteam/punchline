@@ -7,7 +7,6 @@ import (
 	"github.com/pion/ice/v2"
 	"github.com/pion/randutil"
 	"go.uber.org/zap"
-	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 	"math/big"
 	"time"
 )
@@ -18,8 +17,10 @@ type ICEAgentWrapper struct {
 
 	signalingClient signaling.SignalingClient
 
-	intf *wgtypes.Device
-	peer *wgtypes.Peer
+	source string
+	target string
+	//intf *wgtypes.Device
+	//peer *wgtypes.Peer
 
 	connectionState   ConnectionState
 	agent             *ice.Agent
@@ -28,7 +29,12 @@ type ICEAgentWrapper struct {
 }
 
 // NewICEAgentWrapper 创建并返回一个新的 ICEAgentWrapper
-func NewICEAgentWrapper() (*ICEAgentWrapper, error) {
+func NewICEAgentWrapper(
+	logger *zap.Logger,
+	signalingClient signaling.SignalingClient,
+	source string,
+	target string,
+) (*ICEAgentWrapper, error) {
 	// 创建 ICE 配置
 	iceConfig := ice.AgentConfig{
 		NetworkTypes: []ice.NetworkType{ice.NetworkTypeUDP4, ice.NetworkTypeUDP6},
@@ -47,7 +53,13 @@ func NewICEAgentWrapper() (*ICEAgentWrapper, error) {
 	}
 
 	wrapper := &ICEAgentWrapper{
-		agent: agent,
+		logger:          logger,
+		signalingClient: signalingClient,
+		source:          source,
+		target:          target,
+
+		agent:           agent,
+		connectionState: ConnectionStateClosed,
 		localCredentials: &signaling.Credentials{
 			Ufrag:     localUfrag,
 			Pwd:       localPwd,
@@ -170,11 +182,11 @@ func (w *ICEAgentWrapper) sendCandidate(c ice.Candidate) error {
 
 	// TODO 发送到信令服务器
 	_, err := w.signalingClient.Publish(ctx, &signaling.PublishRequest{
-		Topic:    w.intf.PublicKey.String(),
-		Hostname: "",
+		Topic:    w.source,
+		Hostname: w.source,
 		Data:     nil,
 
-		Candidate: signaling.NewCandidate(c),
+		Candidate: msg.Candidate,
 	})
 	if err != nil {
 		return err
@@ -193,8 +205,8 @@ func (w *ICEAgentWrapper) onConnectionStateChange(state ice.ConnectionState) {
 
 func (w *ICEAgentWrapper) IsControlling() bool {
 	var pkOur, pkTheir big.Int
-	pkOur.SetBytes(w.intf.PublicKey[:])
-	pkTheir.SetBytes(w.peer.PublicKey[:])
+	pkOur.SetBytes([]byte(w.source))
+	pkTheir.SetBytes([]byte(w.target))
 
 	return pkOur.Cmp(&pkTheir) == -1
 }

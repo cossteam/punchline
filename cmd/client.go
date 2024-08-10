@@ -1,15 +1,14 @@
 package cmd
 
 import (
-	"fmt"
+	"github.com/cossteam/punchline/api/signaling/v1"
 	"github.com/cossteam/punchline/pkg/controller"
-	controllerClient "github.com/cossteam/punchline/pkg/controller/client"
+	"github.com/cossteam/punchline/pkg/ice"
 	"github.com/cossteam/punchline/pkg/log"
-	plugin "github.com/cossteam/punchline/pkg/plugin/client"
-	"github.com/cossteam/punchline/pkg/transport/udp"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
-	"net"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func init() {
@@ -56,10 +55,9 @@ var Client = &cli.Command{
 			Value:   "stun:stun.easyvoip.com:3478",
 		},
 		&cli.StringFlag{
-			Name:    "grpcServer",
-			Usage:   "grpcServer",
-			Aliases: []string{"gs"},
-			Value:   "",
+			Name:  "signalServer",
+			Usage: "signalServer",
+			Value: "",
 		},
 	},
 	Action: runClient,
@@ -76,39 +74,57 @@ func runClient(ctx *cli.Context) error {
 		return err
 	}
 
-	raddr, err := net.ResolveUDPAddr("udp", c.Server)
+	//raddr, err := net.ResolveUDPAddr("udp", c.Server)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//makeup, err := udp.DialMakeup(raddr.IP, raddr.Port)
+	//if err != nil {
+	//	return fmt.Errorf("failed to dial makeup: %w", err)
+	//}
+
+	//coordinator := make([]*net.UDPAddr, 0)
+	//if raddr != nil {
+	//	coordinator = append(coordinator, raddr)
+	//}
+
+	//ps, err := plugin.LoadPlugins(logger, c)
+	//if err != nil {
+	//	return err
+	//}
+
+	//client := controllerClient.NewClientController(
+	//	logger.With(zap.String("controller", "client")),
+	//	c.Hostname,
+	//	uint32(c.EndpointPort),
+	//	makeup,
+	//	coordinator,
+	//	c,
+	//	controllerClient.WithClientPlugins(ps),
+	//)
+
+	conn, err := grpc.NewClient(c.SignalServer, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return err
 	}
+	defer conn.Close()
 
-	makeup, err := udp.DialMakeup(raddr.IP, raddr.Port)
-	if err != nil {
-		return fmt.Errorf("failed to dial makeup: %w", err)
+	signalingClient := signaling.NewSignalingClient(conn)
+
+	var peers []controller.Runnable
+	for _, sub := range c.Subscriptions {
+		wrapper, err := ice.NewICEAgentWrapper(logger, signalingClient, c.Hostname, sub.Topic)
+		if err != nil {
+			return err
+		}
+		peers = append(peers, wrapper)
 	}
-
-	coordinator := make([]*net.UDPAddr, 0)
-	if raddr != nil {
-		coordinator = append(coordinator, raddr)
-	}
-
-	ps, err := plugin.LoadPlugins(logger, c)
-	if err != nil {
-		return err
-	}
-
-	client := controllerClient.NewClientController(
-		logger.With(zap.String("controller", "client")),
-		c.Hostname,
-		uint32(c.EndpointPort),
-		makeup,
-		coordinator,
-		c,
-		controllerClient.WithClientPlugins(ps),
-	)
 
 	ctrl := controller.NewManager(
 		logger.With(zap.String("controller", "manager")),
-		client,
+		peers...,
+	//client,
 	)
 	return ctrl.Start(SetupSignalHandler())
 }
