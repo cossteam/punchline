@@ -6,14 +6,18 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/pion/ice/v2"
 )
 
+const (
+	// 硬编码的 ICE 连接的用户名和密码
+	hardcodedUfrag = "userfrag"
+	hardcodedPwd   = "password"
+)
+
 func main() {
-	// 使用 flag 来指定信令服务器地址
 	serverAddr := flag.String("addr", "localhost:8080", "signaling server address")
 	flag.Parse()
 
@@ -23,13 +27,19 @@ func main() {
 	}
 	defer conn.Close()
 
-	agent, err := ice.NewAgent(&ice.AgentConfig{})
+	agent, err := ice.NewAgent(&ice.AgentConfig{
+		NetworkTypes: []ice.NetworkType{ice.NetworkTypeUDP4, ice.NetworkTypeUDP6},
+	})
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	if err := agent.SetRemoteCredentials(hardcodedUfrag, hardcodedPwd); err != nil {
+		log.Fatal(err)
+	}
+
 	// 处理候选者收集事件
-	agent.OnCandidate(func(c ice.Candidate) {
+	if err := agent.OnCandidate(func(c ice.Candidate) {
 		if c != nil {
 			fmt.Println("Discovered new candidate:", c.String())
 			err := conn.WriteMessage(websocket.TextMessage, []byte(c.Marshal()))
@@ -37,16 +47,9 @@ func main() {
 				log.Println("write:", err)
 			}
 		}
-	})
-
-	// 处理ICE连接状态改变事件
-	agent.OnConnectionStateChange(func(state ice.ConnectionState) {
-		fmt.Println("Connection State has changed:", state.String())
-		if state == ice.ConnectionStateConnected {
-			fmt.Println("Connected to remote peer")
-			go sendMessage(agent)
-		}
-	})
+	}); err != nil {
+		log.Fatal(err)
+	}
 
 	// 监听信令服务器的消息
 	go func() {
@@ -68,11 +71,33 @@ func main() {
 		}
 	}()
 
-	// 启动ICE连接
+	// 创建ICE连接
+	connChannel := make(chan *ice.Conn)
+	if err := agent.OnConnectionStateChange(func(state ice.ConnectionState) {
+		fmt.Println("Connection State has changed:", state.String())
+		if state == ice.ConnectionStateConnected {
+			fmt.Println("Connected to remote peer")
+			agent.OnSelectedCandidatePairChange(func(local, remote ice.Candidate) {
+				iceConn, err := agent.Dial(nil, hardcodedUfrag, hardcodedPwd)
+				if err != nil {
+					log.Fatal("Failed to dial ICE connection:", err)
+				}
+				connChannel <- iceConn
+			})
+		}
+	}); err != nil {
+		log.Fatal(err)
+	}
+
+	// 启动 ICE 连接
 	err = agent.GatherCandidates()
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// 获取 ICE 连接并发送消息
+	iceConn := <-connChannel
+	go sendMessage(iceConn)
 
 	// 等待Ctrl+C退出
 	stop := make(chan os.Signal, 1)
@@ -80,17 +105,19 @@ func main() {
 	<-stop
 
 	fmt.Println("Exiting...")
+	iceConn.Close()
 	agent.Close()
 	conn.Close()
 }
 
-func sendMessage(agent *ice.Agent) {
+func sendMessage(iceConn *ice.Conn) {
 	for {
-		time.Sleep(5 * time.Second)
-		err := agent.Send([]byte("Hello from client!"))
+		message := "Hello from client!"
+		_, err := iceConn.Write([]byte(message))
 		if err != nil {
 			log.Println("send error:", err)
 			return
 		}
+		fmt.Printf("Sent message: %s\n", message)
 	}
 }
