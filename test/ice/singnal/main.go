@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
 
@@ -16,13 +17,19 @@ var upgrader = websocket.Upgrader{
 var clients = make(map[*websocket.Conn]bool)
 var broadcast = make(chan []byte)
 
+var addr string
+
+func init() {
+	flag.StringVar(&addr, "addr", ":18080", "address to listen on")
+}
+
 func main() {
 	http.HandleFunc("/ws", handleConnections)
 
 	go handleMessages()
 
 	log.Println("Signaling server started on :8080")
-	err := http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe(addr, nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}

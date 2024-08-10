@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/pion/ice/v2"
@@ -9,10 +10,14 @@ import (
 	"os/signal"
 )
 
-var serverAddr = "ws://localhost:8080/ws"
+var server string
+
+func init() {
+	flag.StringVar(&server, "server", "localhost:18080", "address to listen on")
+}
 
 func main() {
-	conn, _, err := websocket.DefaultDialer.Dial(serverAddr, nil)
+	conn, _, err := websocket.DefaultDialer.Dial(server, nil)
 	if err != nil {
 		log.Fatal("dial:", err)
 	}
