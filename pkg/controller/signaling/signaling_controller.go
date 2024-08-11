@@ -132,6 +132,7 @@ func (sc *SignalingController) Subscribe(req *signaling.SubscribeRequest, stream
 			}
 		case v := <-ch:
 			if msg, ok := v.(*signaling.Message); ok {
+				sc.logger.Debug("发送消息", zap.String("topic", msg.Topic), zap.Any("message", msg))
 				if err := stream.Send(&signaling.Message{
 					Topic: msg.Topic,
 					Data:  msg.Data,

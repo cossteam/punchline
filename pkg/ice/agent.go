@@ -247,7 +247,7 @@ func (p *Peer) onConnectionStateChange(state ice.ConnectionState) {
 }
 
 func (p *Peer) handleSignalingMessage(message *signal.Message) error {
-	p.logger.Debug("Received signaling message", zap.Reflect("message", message))
+	p.logger.Debug("Received signaling message", zap.Any("message", message))
 
 	if message.Credentials != nil {
 		p.onRemoteCredentials(message.Credentials)
