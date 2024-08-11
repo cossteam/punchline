@@ -107,6 +107,12 @@ func (p *Peer) Start(ctx context.Context) error {
 		}
 		close(serverShutdown)
 	}()
+	//
+	//if err := p.client.Publish(ctx, &signal.Message{
+	//	Topic: p.target,
+	//}); err != nil {
+	//	return err
+	//}
 
 	if err := p.client.Subscribe(ctx, p.target, p.handleSignalingMessage); err != nil {
 		return err
@@ -193,7 +199,7 @@ func (p *Peer) onLocalCandidate(c ice.Candidate) {
 	}
 
 	logger := p.logger.With(zap.Stringer("candidate", c))
-	logger.Debug("Added local candidate to agent")
+	logger.Debug("Added local candidate to agent", zap.Stringer("state", p.connectionState))
 
 	if err := p.sendCandidate(c); err != nil {
 		logger.Error("Failed to send candidate", zap.Error(err))
@@ -247,7 +253,7 @@ func (p *Peer) onConnectionStateChange(state ice.ConnectionState) {
 }
 
 func (p *Peer) handleSignalingMessage(message *signal.Message) error {
-	p.logger.Debug("Received signaling message", zap.Any("message", message))
+	p.logger.Debug("Received signaling message", zap.Stringer("state", p.connectionState), zap.Any("message", message))
 
 	if message.Credentials != nil {
 		p.onRemoteCredentials(message.Credentials)
@@ -263,7 +269,7 @@ func (p *Peer) handleSignalingMessage(message *signal.Message) error {
 // onRemoteCredentials is a handler called for each received pair of remote Ufrag/Pwd via the signaling channel
 func (p *Peer) onRemoteCredentials(creds *signal.Credentials) {
 	logger := p.logger.With(zap.Reflect("creds", creds))
-	logger.Debug("Received remote credentials")
+	logger.Debug("Received remote credentials", zap.Stringer("state", p.connectionState))
 
 	if p.isSessionRestart(creds) {
 		if err := p.Restart(); err != nil {
@@ -380,7 +386,7 @@ func (p *Peer) onRemoteCandidate(c *signal.Candidate) {
 		return
 	}
 
-	logger.Debug("Added remote candidate to agent")
+	logger.Debug("Added remote candidate to agent", zap.Stringer("state", p.connectionState))
 
 	if p.connectionState == ConnectionStateGatheringRemote {
 		p.connectionState = ConnectionStateConnecting

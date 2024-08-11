@@ -118,9 +118,10 @@ func (c *SignalingClient) Subscribe(ctx context.Context, topic string, handler f
 			}
 
 			msg := &Message{
-				Topic: res.Topic,
-				//Event: Event(res.Event),
-				Data: res.Data,
+				Topic:       res.Topic,
+				Data:        res.Data,
+				Credentials: res.Credentials,
+				Candidate:   res.Candidate,
 			}
 			if err := handler(msg); err != nil {
 				log.Printf("error handling message: %v", err)
