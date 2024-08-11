@@ -164,11 +164,6 @@ func (p *Peer) Start(ctx context.Context) error {
 		return errSwitchToIdle
 	}
 
-	// 开始连接检查
-	if err := p.agent.GatherCandidates(); err != nil {
-		return fmt.Errorf("failed to gather candidates: %v", err)
-	}
-
 	// 设置远程用户名片段和密码
 	//if err := p.agent.SetRemoteCredentials(p.remoteUfrag, p.remotePwd); err != nil {
 	//	return fmt.Errorf("failed to set remote credentials: %v", err)
