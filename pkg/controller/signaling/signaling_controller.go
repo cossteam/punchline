@@ -87,7 +87,7 @@ func (sc *SignalingController) Unsubscribe(ctx context.Context, request *api.Uns
 
 func (sc *SignalingController) Publish(ctx context.Context, req *signaling.PublishRequest) (*signaling.PublishResponse, error) {
 	sc.logger.Debug("收到发布请求", zap.String("topic", req.Topic), zap.Any("candidate", req.Candidate))
-	sc.pub.Publish(&api.Message{
+	sc.pub.Publish(&signaling.Message{
 		Topic: req.Topic,
 		Data:  req.Data,
 	})
@@ -100,7 +100,7 @@ func (sc *SignalingController) Subscribe(req *signaling.SubscribeRequest, stream
 	}
 
 	ch := sc.pub.SubscribeTopic(func(v interface{}) bool {
-		if key, ok := v.(*api.Message); ok {
+		if key, ok := v.(*signaling.Message); ok {
 			return key.Topic == req.Topic
 		}
 		return false
@@ -129,10 +129,13 @@ func (sc *SignalingController) Subscribe(req *signaling.SubscribeRequest, stream
 				return nil
 			}
 		case v := <-ch:
-			if msg, ok := v.(*api.Message); ok {
+			if msg, ok := v.(*signaling.Message); ok {
 				if err := stream.Send(&signaling.Message{
 					Topic: msg.Topic,
 					Data:  msg.Data,
+
+					Credentials: msg.Credentials,
+					Candidate:   msg.Candidate,
 				}); err != nil {
 					sc.logger.Error("发送消息失败", zap.Error(err))
 					return err

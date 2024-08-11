@@ -18,9 +18,24 @@ var (
 	_ apiv1.Runnable = &serverController{}
 
 	_ api.PubSubServiceServer = &serverController{}
-
-	//_ pubsub.PubSubService = &serverController{}
 )
+
+type serverController struct {
+	sync.RWMutex
+
+	c       *config.Config
+	logger  *zap.Logger
+	outside udp.Conn
+
+	publisher publisher.Publisher
+	pubSvc    api.PubSubServiceServer
+
+	addrMap map[string]*host.RemoteList
+	hostMap *host.HostMap
+
+	p   []byte
+	out []byte
+}
 
 func NewServerController(
 	logger *zap.Logger,
@@ -40,43 +55,6 @@ func NewServerController(
 		p:       make([]byte, mtu),
 		out:     make([]byte, mtu),
 	}
-}
-
-type serverController struct {
-	sync.RWMutex
-
-	c       *config.Config
-	logger  *zap.Logger
-	outside udp.Conn
-
-	publisher publisher.Publisher
-	pubSvc    api.PubSubServiceServer
-
-	addrMap map[string]*host.RemoteList
-	hostMap *host.HostMap
-
-	p   []byte
-	out []byte
-}
-
-func (sc *serverController) Unsubscribe(ctx context.Context, request *api.UnsubscribeRequest) (*api.UnsubscribeResponse, error) {
-	return &api.UnsubscribeResponse{}, nil
-}
-
-func (sc *serverController) Publish(ctx context.Context, request *api.PublishRequest) (*api.PublishResponse, error) {
-	//fmt.Println("serverController Publish => ", request)
-	//err := sc.pubSvc.Publish(ctx, &publisher.Message{
-	//	Topic: request.Topic,
-	//	Data:  request.Data,
-	//})
-	//if err != nil {
-	//	return nil, err
-	//}
-	return sc.pubSvc.Publish(ctx, request)
-}
-
-func (sc *serverController) Subscribe(request *api.SubscribeRequest, subscribeServer api.PubSubService_SubscribeServer) error {
-	return nil
 }
 
 func (sc *serverController) Start(ctx context.Context) error {
@@ -122,6 +100,26 @@ func (sc *serverController) Start(ctx context.Context) error {
 
 	<-serverShutdown
 
+	return nil
+}
+
+func (sc *serverController) Unsubscribe(ctx context.Context, request *api.UnsubscribeRequest) (*api.UnsubscribeResponse, error) {
+	return &api.UnsubscribeResponse{}, nil
+}
+
+func (sc *serverController) Publish(ctx context.Context, request *api.PublishRequest) (*api.PublishResponse, error) {
+	//fmt.Println("serverController Publish => ", request)
+	//err := sc.pubSvc.Publish(ctx, &publisher.Message{
+	//	Topic: request.Topic,
+	//	Data:  request.Data,
+	//})
+	//if err != nil {
+	//	return nil, err
+	//}
+	return sc.pubSvc.Publish(ctx, request)
+}
+
+func (sc *serverController) Subscribe(request *api.SubscribeRequest, subscribeServer api.PubSubService_SubscribeServer) error {
 	return nil
 }
 

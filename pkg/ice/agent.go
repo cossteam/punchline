@@ -2,25 +2,35 @@ package ice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/cossteam/punchline/api/signaling/v1"
+	"github.com/cossteam/punchline/pkg/signal"
 	"github.com/pion/ice/v2"
 	"github.com/pion/randutil"
+	"github.com/pion/stun"
 	"go.uber.org/zap"
 	"math/big"
+	"strings"
+	"sync/atomic"
 	"time"
 )
 
-// ICEAgentWrapper 封装了 Pion ICE Agent 以简化点对点连接的建立
-type ICEAgentWrapper struct {
+var (
+	_iceURLs = []string{"stun:stun3.l.google.com:19302", "stun:stun.cunicu.li:3478", "stun:stun.easyvoip.com:3478"}
+
+	errInvalidConnectionStateForRestart = errors.New("can not restart agent while in state")
+)
+
+// Peer 封装了 Pion ICE Agent 以简化点对点连接的建立
+type Peer struct {
 	logger *zap.Logger
 
-	signalingClient signaling.SignalingClient
+	client signal.Client
 
-	source string
-	target string
-	//intf *wgtypes.Device
-	//peer *wgtypes.Peer
+	source   string
+	target   string
+	restarts atomic.Uint32
 
 	connectionState   ConnectionState
 	agent             *ice.Agent
@@ -28,16 +38,33 @@ type ICEAgentWrapper struct {
 	localCredentials  *signaling.Credentials
 }
 
-// NewICEAgentWrapper 创建并返回一个新的 ICEAgentWrapper
+// NewICEAgentWrapper 创建并返回一个新的 Peer
 func NewICEAgentWrapper(
 	logger *zap.Logger,
-	signalingClient signaling.SignalingClient,
+	signalingClient signal.Client,
 	source string,
 	target string,
-) (*ICEAgentWrapper, error) {
+) (*Peer, error) {
+	iceURLs, err := convertToStunURIs(_iceURLs)
+	if err != nil {
+		return nil, err
+	}
+
 	// 创建 ICE 配置
 	iceConfig := ice.AgentConfig{
-		NetworkTypes: []ice.NetworkType{ice.NetworkTypeUDP4, ice.NetworkTypeUDP6},
+		Urls: iceURLs,
+		NetworkTypes: []ice.NetworkType{
+			ice.NetworkTypeTCP4,
+			ice.NetworkTypeTCP6,
+			ice.NetworkTypeUDP4,
+			ice.NetworkTypeUDP6,
+		},
+		CandidateTypes: []ice.CandidateType{
+			ice.CandidateTypeHost,
+			ice.CandidateTypeServerReflexive,
+			ice.CandidateTypePeerReflexive,
+			//ice.CandidateTypeRelay,
+		},
 	}
 
 	// 创建新的 ICE Agent
@@ -52,11 +79,11 @@ func NewICEAgentWrapper(
 		return nil, fmt.Errorf("failed to get local user credentials: %v", err)
 	}
 
-	wrapper := &ICEAgentWrapper{
-		logger:          logger,
-		signalingClient: signalingClient,
-		source:          source,
-		target:          target,
+	wrapper := &Peer{
+		logger: logger,
+		client: signalingClient,
+		source: source,
+		target: target,
 
 		agent:           agent,
 		connectionState: ConnectionStateClosed,
@@ -70,50 +97,59 @@ func NewICEAgentWrapper(
 	return wrapper, nil
 }
 
-// AddRemoteCandidate 添加远程候选者
-func (w *ICEAgentWrapper) AddRemoteCandidate(c *ice.Candidate) error {
-	return w.agent.AddRemoteCandidate(*c)
-}
+func (p *Peer) Start(ctx context.Context) error {
+	serverShutdown := make(chan struct{})
+	go func() {
+		<-ctx.Done()
+		p.logger.Info("Shutting down SignalingServer")
+		if err := p.agent.Close(); err != nil {
+			p.logger.Error("Failed to close agent", zap.Error(err))
+		}
+		close(serverShutdown)
+	}()
 
-func (w *ICEAgentWrapper) Start(ctx context.Context) error {
+	if err := p.client.Subscribe(ctx, p.target, p.handleSignalingMessage); err != nil {
+		return err
+	}
+
 	// 当我们收集到一个新的ICE候选对象时，将其发送到远程对等方
-	if err := w.agent.OnCandidate(w.onLocalCandidate); err != nil {
+	if err := p.agent.OnCandidate(p.onLocalCandidate); err != nil {
 		return fmt.Errorf("failed to set candidate callback: %v", err)
 	}
 
 	// When ICE Connection state has change print to stdout
-	if err := w.agent.OnConnectionStateChange(w.onConnectionStateChange); err != nil {
+	if err := p.agent.OnConnectionStateChange(p.onConnectionStateChange); err != nil {
 		return err
 	}
 
 	// 开始连接检查
-	if err := w.agent.GatherCandidates(); err != nil {
+	if err := p.agent.GatherCandidates(); err != nil {
 		return fmt.Errorf("failed to gather candidates: %v", err)
 	}
 
-	w.connect(w.localCredentials.Ufrag, w.localCredentials.Pwd)
-
 	// 设置远程用户名片段和密码
-	//if err := w.agent.SetRemoteCredentials(w.remoteUfrag, w.remotePwd); err != nil {
+	//if err := p.agent.SetRemoteCredentials(p.remoteUfrag, p.remotePwd); err != nil {
 	//	return fmt.Errorf("failed to set remote credentials: %v", err)
 	//}
+
+	<-serverShutdown
 
 	return nil
 }
 
-func (w *ICEAgentWrapper) connect(ufrag, pwd string) {
+func (p *Peer) connect(ufrag, pwd string) {
 	var connect func(context.Context, string, string) (*ice.Conn, error)
-	if w.IsControlling() {
-		w.logger.Debug("Dialing...")
-		connect = w.agent.Dial
+	if p.IsControlling() {
+		p.logger.Debug("Dialing...")
+		connect = p.agent.Dial
 	} else {
-		w.logger.Debug("Accepting...")
-		connect = w.agent.Accept
+		p.logger.Debug("Accepting...")
+		connect = p.agent.Accept
 	}
 
 	conn, err := connect(context.TODO(), ufrag, pwd)
 	if err != nil {
-		w.logger.Error("Failed to connect", zap.Error(err))
+		p.logger.Error("Failed to connect", zap.Error(err))
 		return
 	}
 
@@ -147,32 +183,32 @@ func (w *ICEAgentWrapper) connect(ufrag, pwd string) {
 }
 
 // Close 关闭 ICE Agent
-func (w *ICEAgentWrapper) Close() error {
-	return w.agent.Close()
+func (p *Peer) Close() error {
+	return p.agent.Close()
 }
 
-func (w *ICEAgentWrapper) onLocalCandidate(c ice.Candidate) {
+func (p *Peer) onLocalCandidate(c ice.Candidate) {
 	if c == nil {
 		return
 	}
 
-	logger := w.logger.With(zap.Reflect("candidate", c))
+	logger := p.logger.With(zap.Stringer("candidate", c))
 	logger.Debug("Added local candidate to agent")
 
-	if err := w.sendCandidate(c); err != nil {
+	if err := p.sendCandidate(c); err != nil {
 		logger.Error("Failed to send candidate", zap.Error(err))
 	}
 
-	//if w.connectionState == ConnectionStateGatheringLocal {
-	//	w.connectionState = ConnectionStateConnecting
-	//	go w.connect(w.remoteCredentials.Ufrag, w.remoteCredentials.Pwd)
-	//} else if w.connectionState == ConnectionStateGathering {
-	//	// Continue waiting until we received the first remote candidate
-	//	w.connectionState = ConnectionStateGatheringRemote
-	//}
+	if p.connectionState == ConnectionStateGatheringLocal {
+		p.connectionState = ConnectionStateConnecting
+		go p.connect(p.remoteCredentials.Ufrag, p.remoteCredentials.Pwd)
+	} else if p.connectionState == ConnectionStateGathering {
+		// Continue waiting until we received the first remote candidate
+		p.connectionState = ConnectionStateGatheringRemote
+	}
 }
 
-func (w *ICEAgentWrapper) sendCandidate(c ice.Candidate) error {
+func (p *Peer) sendCandidate(c ice.Candidate) error {
 	msg := &signaling.Message{
 		Candidate: signaling.NewCandidate(c),
 	}
@@ -181,32 +217,187 @@ func (w *ICEAgentWrapper) sendCandidate(c ice.Candidate) error {
 	defer cancel()
 
 	// TODO 发送到信令服务器
-	_, err := w.signalingClient.Publish(ctx, &signaling.PublishRequest{
-		Topic:    w.source,
-		Hostname: w.source,
-		Data:     nil,
-
+	if err := p.client.Publish(ctx, &signal.Message{
+		Topic:     p.source,
+		Data:      nil,
 		Candidate: msg.Candidate,
-	})
-	if err != nil {
+	}); err != nil {
 		return err
 	}
 
-	w.logger.Debug("Sent candidate", zap.Reflect("candidate", msg.Candidate))
+	p.logger.Debug("Sent candidate", zap.Reflect("candidate", msg.Candidate))
 
 	return nil
 }
 
-func (w *ICEAgentWrapper) onConnectionStateChange(state ice.ConnectionState) {
+func (p *Peer) onConnectionStateChange(state ice.ConnectionState) {
 	cs := signaling.NewConnectionState(state)
 
-	w.logger.Debug("ICE connection state changed", zap.Reflect("state", cs))
+	p.logger.Debug("ICE connection state changed", zap.Reflect("state", cs))
+
+	switch cs {
+	case ConnectionStateFailed, ConnectionStateDisconnected:
+
+	case ConnectionStateClosed:
+
+	case ConnectionStateConnected:
+
+	default:
+	}
 }
 
-func (w *ICEAgentWrapper) IsControlling() bool {
+func (p *Peer) handleSignalingMessage(message *signal.Message) error {
+	p.logger.Debug("Received signaling message", zap.Reflect("message", message))
+
+	if message.Credentials != nil {
+		p.onRemoteCredentials(message.Credentials)
+	}
+
+	if message.Candidate != nil {
+		p.onRemoteCandidate(message.Candidate)
+	}
+
+	return nil
+}
+
+// onRemoteCredentials is a handler called for each received pair of remote Ufrag/Pwd via the signaling channel
+func (p *Peer) onRemoteCredentials(creds *signal.Credentials) {
+	logger := p.logger.With(zap.Reflect("creds", creds))
+	logger.Debug("Received remote credentials")
+
+	if p.isSessionRestart(creds) {
+		if err := p.Restart(); err != nil {
+			p.logger.Error("Failed to restart ICE session", zap.Error(err))
+		}
+	} else {
+		if p.connectionState != ConnectionStateIdle {
+			p.logger.Debug("Ignoring duplicated credentials")
+			return
+		}
+		// 如果当前状态为 ConnectionStateIdle，更新为 ConnectionStateGathering
+		p.connectionState = ConnectionStateGathering
+
+		//p.SetStateIf(daemon.PeerStateConnecting, daemon.PeerStateClosed, daemon.PeerStateFailed, daemon.PeerStateNew)
+
+		p.remoteCredentials = creds
+
+		// Return our own credentials if requested
+		if creds.NeedCreds {
+			if err := p.sendCredentials(false); err != nil {
+				p.logger.Error("Failed to send credentials", zap.Error(err))
+				return
+			}
+		}
+
+		// Start gathering candidates
+		if err := p.agent.GatherCandidates(); err != nil {
+			p.logger.Error("failed to gather candidates", zap.Error(err))
+			return
+		}
+	}
+}
+
+func (p *Peer) sendCredentials(need bool) error {
+	p.localCredentials.NeedCreds = need
+
+	msg := &signaling.Message{
+		Credentials: p.localCredentials,
+	}
+
+	// TODO: Is this timeout suitable?
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := p.client.Publish(ctx, &signal.Message{
+		Topic:       p.source,
+		Data:        nil,
+		Credentials: msg.Credentials,
+	}); err != nil {
+		return err
+	}
+
+	p.logger.Debug("Sent credentials", zap.Reflect("creds", msg.Credentials))
+
+	return nil
+}
+
+// Restart the ICE agent by creating a new one
+func (p *Peer) Restart() error {
+	if p.connectionState == ConnectionStateClosed || p.connectionState == ConnectionStateClosing || p.connectionState == ConnectionStateRestarting {
+		return fmt.Errorf("%w: %s", errInvalidConnectionStateForRestart, strings.ToLower(p.connectionState.String()))
+	}
+
+	p.connectionState = ConnectionStateRestarting
+	p.logger.Debug("Restarting ICE session")
+
+	if err := p.agent.Close(); err != nil {
+		return fmt.Errorf("failed to close agent: %w", err)
+	}
+
+	// The new agent will be recreated in the onConnectionStateChange() handler
+	// once the old agent has been properly closed
+
+	p.restarts.Add(1)
+
+	return nil
+}
+
+// isSessionRestart checks if a received offer should restart the
+// ICE session by comparing ufrag & pwd with previously used values.
+func (p *Peer) isSessionRestart(c *signal.Credentials) bool {
+	r := p.remoteCredentials
+	return (r != nil) &&
+		(r.Ufrag != "" && r.Pwd != "") &&
+		(c.Ufrag != "" && c.Pwd != "") &&
+		(r.Ufrag != c.Ufrag || r.Pwd != c.Pwd)
+}
+
+// AddRemoteCandidate 添加远程候选者
+func (p *Peer) AddRemoteCandidate(c *ice.Candidate) error {
+	return p.agent.AddRemoteCandidate(*c)
+}
+
+func (p *Peer) IsControlling() bool {
 	var pkOur, pkTheir big.Int
-	pkOur.SetBytes([]byte(w.source))
-	pkTheir.SetBytes([]byte(w.target))
+	pkOur.SetBytes([]byte(p.source))
+	pkTheir.SetBytes([]byte(p.target))
 
 	return pkOur.Cmp(&pkTheir) == -1
+}
+
+// onRemoteCandidate is a handler called for each received candidate via the signaling channel
+func (p *Peer) onRemoteCandidate(c *signal.Candidate) {
+	logger := p.logger.With(zap.Reflect("candidate", c))
+
+	ic, err := c.ICECandidate()
+	if err != nil {
+		logger.Error("Failed to remote candidate", zap.Error(err))
+		return
+	}
+
+	if err := p.agent.AddRemoteCandidate(ic); err != nil {
+		logger.Error("Failed to add remote candidate", zap.Error(err))
+		return
+	}
+
+	logger.Debug("Added remote candidate to agent")
+
+	if p.connectionState == ConnectionStateGatheringRemote {
+		p.connectionState = ConnectionStateConnecting
+		go p.connect(p.remoteCredentials.Ufrag, p.remoteCredentials.Pwd)
+	} else if p.connectionState == ConnectionStateGathering {
+		p.connectionState = ConnectionStateGatheringLocal
+	}
+}
+
+func convertToStunURIs(urls []string) ([]*stun.URI, error) {
+	var iceURLs []*stun.URI
+	for _, url := range urls {
+		uri, err := stun.ParseURI(url)
+		if err != nil {
+			return nil, err
+		}
+		iceURLs = append(iceURLs, uri)
+	}
+	return iceURLs, nil
 }

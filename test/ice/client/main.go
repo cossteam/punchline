@@ -2,13 +2,12 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
+	"github.com/pion/stun"
 	"log"
 	"os"
 	"os/signal"
 
-	"github.com/gorilla/websocket"
 	"github.com/pion/ice/v2"
 )
 
@@ -16,69 +15,62 @@ const (
 	// 硬编码的 ICE 连接的用户名和密码
 	hardcodedUfrag = "userfrag"
 	hardcodedPwd   = "password"
-	stunServer     = "stun:stun.l.google.com:19302"
+	stunServer     = "stun.l.google.com:19302"
+)
+
+var (
+	_iceURLs = []string{"stun:stun3.l.google.com:19302", "stun:stun.cunicu.li:3478", "stun:stun.easyvoip.com:3478"}
 )
 
 func main() {
-	serverAddr := flag.String("addr", "ws://localhost:8080/ws", "signaling server address")
-	flag.Parse()
-
-	conn, _, err := websocket.DefaultDialer.Dial(*serverAddr, nil)
+	iceURLs, err := convertToStunURIs(_iceURLs)
 	if err != nil {
-		log.Fatal("dial:", err)
+		panic(err)
 	}
-	defer conn.Close()
+
+	ac := &ice.AgentConfig{
+		NetworkTypes: []ice.NetworkType{
+			ice.NetworkTypeTCP4,
+			ice.NetworkTypeTCP6,
+			ice.NetworkTypeUDP4,
+			ice.NetworkTypeUDP6,
+		},
+		Urls: iceURLs,
+		CandidateTypes: []ice.CandidateType{
+			ice.CandidateTypeHost,
+			ice.CandidateTypeServerReflexive,
+			ice.CandidateTypePeerReflexive,
+			//ice.CandidateTypeRelay,
+		},
+	}
 
 	// 创建 ICE agent，并使用 STUN 服务器配置
-	agent, err := ice.NewAgent(&ice.AgentConfig{
-		NetworkTypes: []ice.NetworkType{ice.NetworkTypeUDP4, ice.NetworkTypeUDP6},
-		Urls: []*ice.URL{
-			{
-				Scheme: ice.SchemeTypeSTUN,
-				Host:   stunServer,
-			},
-		},
-	})
+	agent, err := ice.NewAgent(ac)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// 处理 ICE 候选者
-	agent.OnCandidate(func(c ice.Candidate) {
+	if err = agent.OnCandidate(func(c ice.Candidate) {
 		if c != nil {
 			fmt.Println("Discovered new candidate:", c.String())
-			err := conn.WriteMessage(websocket.TextMessage, []byte(c.Marshal()))
-			if err != nil {
-				log.Println("write:", err)
-			}
 		}
-	})
+	}); err != nil {
+		log.Fatal(err)
+	}
 
-	// 监听信令服务器的消息
-	go func() {
-		for {
-			_, message, err := conn.ReadMessage()
-			if err != nil {
-				log.Println("read:", err)
-				return
-			}
-			candidate, err := ice.UnmarshalCandidate(string(message))
-			if err != nil {
-				log.Println("unmarshal:", err)
-				continue
-			}
-			err = agent.AddRemoteCandidate(candidate)
-			if err != nil {
-				log.Println("AddRemoteCandidate:", err)
-			}
-		}
-	}()
+	err = agent.GatherCandidates()
+	if err != nil {
+		panic(err)
+	}
 
 	// 使用硬编码的用户名和密码创建 ICE 连接
 	iceConn, err := agent.Dial(context.Background(), hardcodedUfrag, hardcodedPwd)
 	if err != nil {
 		log.Fatal("Failed to dial ICE connection:", err)
 	}
+
+	fmt.Println("000")
 
 	// 发送消息
 	go sendMessage(iceConn)
@@ -94,7 +86,7 @@ func main() {
 	fmt.Println("Exiting...")
 	iceConn.Close()
 	agent.Close()
-	conn.Close()
+	//conn.Close()
 }
 
 func sendMessage(iceConn *ice.Conn) {
@@ -119,4 +111,16 @@ func receiveMessage(iceConn *ice.Conn) {
 		}
 		fmt.Printf("Received message: %s\n", string(buf[:n]))
 	}
+}
+
+func convertToStunURIs(urls []string) ([]*stun.URI, error) {
+	var iceURLs []*stun.URI
+	for _, url := range urls {
+		uri, err := stun.ParseURI(url)
+		if err != nil {
+			return nil, err
+		}
+		iceURLs = append(iceURLs, uri)
+	}
+	return iceURLs, nil
 }

@@ -12,7 +12,9 @@ message Message {
     string topic = 1;
     bytes data = 2;
 
+
     Candidate candidate = 3;
+    Credentials credentials = 4;
 }
 
 message PublishRequest {

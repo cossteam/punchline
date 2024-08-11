@@ -1,14 +1,12 @@
 package cmd
 
 import (
-	"github.com/cossteam/punchline/api/signaling/v1"
 	"github.com/cossteam/punchline/pkg/controller"
 	"github.com/cossteam/punchline/pkg/ice"
 	"github.com/cossteam/punchline/pkg/log"
+	"github.com/cossteam/punchline/pkg/signal"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 func init() {
@@ -104,13 +102,10 @@ func runClient(ctx *cli.Context) error {
 	//	controllerClient.WithClientPlugins(ps),
 	//)
 
-	conn, err := grpc.NewClient(c.SignalServer, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	signalingClient, err := signal.NewClient(c.SignalServer)
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
-
-	signalingClient := signaling.NewSignalingClient(conn)
 
 	var peers []controller.Runnable
 	for _, sub := range c.Subscriptions {

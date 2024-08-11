@@ -1,6 +1,9 @@
 package signaling
 
-import "github.com/pion/ice/v2"
+import (
+	"fmt"
+	"github.com/pion/ice/v2"
+)
 
 func NewConnectionState(cs ice.ConnectionState) ConnectionState {
 	switch cs {
@@ -78,4 +81,71 @@ func (p RelayProtocol) ToString() string {
 	}
 
 	return "unknown"
+}
+
+func (c *Candidate) ICECandidate() (ice.Candidate, error) {
+	var err error
+
+	relAddr := ""
+	relPort := 0
+	if c.RelatedAddress != nil {
+		relAddr = c.RelatedAddress.Address
+		relPort = int(c.RelatedAddress.Port)
+	}
+
+	nw := ice.NetworkType(c.NetworkType)
+
+	var ic ice.Candidate
+	switch c.Type {
+	case CandidateType_HOST:
+		ic, err = ice.NewCandidateHost(&ice.CandidateHostConfig{
+			Network:    nw.String(),
+			Address:    c.Address,
+			Port:       int(c.Port),
+			Component:  uint16(c.Component),
+			Priority:   uint32(c.Priority),
+			Foundation: c.Foundation,
+			TCPType:    ice.TCPType(c.TcpType),
+		})
+	case CandidateType_SERVER_REFLEXIVE:
+		ic, err = ice.NewCandidateServerReflexive(&ice.CandidateServerReflexiveConfig{
+			Network:    nw.String(),
+			Address:    c.Address,
+			Port:       int(c.Port),
+			Component:  uint16(c.Component),
+			Priority:   uint32(c.Priority),
+			Foundation: c.Foundation,
+			RelAddr:    relAddr,
+			RelPort:    relPort,
+		})
+	case CandidateType_PEER_REFLEXIVE:
+		ic, err = ice.NewCandidatePeerReflexive(&ice.CandidatePeerReflexiveConfig{
+			Network:    nw.String(),
+			Address:    c.Address,
+			Port:       int(c.Port),
+			Component:  uint16(c.Component),
+			Priority:   uint32(c.Priority),
+			Foundation: c.Foundation,
+			RelAddr:    relAddr,
+			RelPort:    relPort,
+		})
+
+	case CandidateType_RELAY:
+		ic, err = ice.NewCandidateRelay(&ice.CandidateRelayConfig{
+			Network:       nw.String(),
+			Address:       c.Address,
+			Port:          int(c.Port),
+			Component:     uint16(c.Component),
+			Priority:      uint32(c.Priority),
+			Foundation:    c.Foundation,
+			RelAddr:       relAddr,
+			RelPort:       relPort,
+			RelayProtocol: c.RelayProtocol.ToString(),
+		})
+
+	default:
+		err = fmt.Errorf("%w: %s", ice.ErrUnknownCandidateTyp, c.Type)
+	}
+
+	return ic, err
 }
