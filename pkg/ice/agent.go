@@ -4,12 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/cenkalti/backoff/v4"
 	"github.com/cossteam/punchline/api/signaling/v1"
 	"github.com/cossteam/punchline/pkg/signal"
 	"github.com/pion/ice/v2"
 	"github.com/pion/randutil"
 	"github.com/pion/stun"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"math/big"
 	"strings"
 	"sync/atomic"
@@ -19,6 +22,7 @@ import (
 var (
 	_iceURLs = []string{"stun:stun3.l.google.com:19302", "stun:stun.cunicu.li:3478", "stun:stun.easyvoip.com:3478"}
 
+	errStillIdle                        = errors.New("not connected yet")
 	errCreateNonClosedAgent             = errors.New("failed to create new agent if previous one is not closed")
 	errSwitchToIdle                     = errors.New("failed to switch to idle state")
 	errInvalidConnectionStateForRestart = errors.New("can not restart agent while in state")
@@ -80,6 +84,8 @@ func NewICEAgentWrapper(
 	if err != nil {
 		return nil, fmt.Errorf("failed to get local user credentials: %v", err)
 	}
+
+	fmt.Println("localUfrag => ", localUfrag)
 
 	wrapper := &Peer{
 		logger: logger,
@@ -167,6 +173,9 @@ func (p *Peer) Start(ctx context.Context) error {
 	//if err := p.agent.SetRemoteCredentials(p.remoteUfrag, p.remotePwd); err != nil {
 	//	return fmt.Errorf("failed to set remote credentials: %v", err)
 	//}
+
+	// Send peer credentials as long as we remain in ConnectionStateIdle
+	go p.sendCredentialsWhileIdleWithBackoff(true)
 
 	<-serverShutdown
 
@@ -283,7 +292,10 @@ func (p *Peer) onConnectionStateChange(state ice.ConnectionState) {
 }
 
 func (p *Peer) handleSignalingMessage(message *signal.Message) error {
-	p.logger.Debug("Received signaling message", zap.Stringer("state", p.connectionState), zap.Any("message", message))
+	p.logger.Debug("Received signaling message",
+		zap.Stringer("state", p.connectionState),
+		zap.Any("credentials", message.Credentials),
+		zap.Any("message", message))
 
 	if message.Credentials != nil {
 		p.onRemoteCredentials(message.Credentials)
@@ -431,6 +443,45 @@ func (p *Peer) onSelectedCandidatePairChange(local ice.Candidate, remote ice.Can
 		zap.Any("local", local),
 		zap.Any("remote", remote),
 	)
+}
+
+func (p *Peer) sendCredentialsWhileIdleWithBackoff(need bool) {
+	bo := backoff.NewExponentialBackOff()
+	bo.MaxInterval = 1 * time.Minute
+
+	if err := backoff.RetryNotify(
+		func() error {
+			if p.connectionState != ConnectionStateIdle {
+				// We are not idling any more.
+				// No need to send credentials
+				return nil
+			}
+
+			if err := p.sendCredentials(need); err != nil {
+				if status.Code(err) == codes.Canceled {
+					// Do not retry when the signaling backend has been closed
+					return nil
+				}
+
+				return err
+			}
+
+			return errStillIdle
+		}, bo,
+		func(err error, d time.Duration) {
+			if errors.Is(err, errStillIdle) {
+				p.logger.Debug("Sending peer credentials while waiting for remote peer",
+					zap.Error(err),
+					zap.Duration("after", d))
+			} else if sts := status.Code(err); sts != codes.Canceled {
+				p.logger.Error("Failed to send peer credentials",
+					zap.Error(err),
+					zap.Duration("after", d))
+			}
+		},
+	); err != nil {
+		p.logger.Error("Failed to send credentials", zap.Error(err))
+	}
 }
 
 func convertToStunURIs(urls []string) ([]*stun.URI, error) {

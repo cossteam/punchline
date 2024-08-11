@@ -5,6 +5,7 @@ go 1.21
 toolchain go1.22.0
 
 require (
+	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/gorilla/websocket v1.5.3
 	github.com/mitchellh/mapstructure v1.5.0
@@ -41,7 +42,6 @@ require (
 	github.com/pion/turn/v2 v2.1.6 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/wlynxg/anet v0.0.3 // indirect
 	github.com/xrash/smetrics v0.0.0-20240312152122-5f08fbb34913 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
