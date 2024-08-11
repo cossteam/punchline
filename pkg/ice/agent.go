@@ -19,6 +19,8 @@ import (
 var (
 	_iceURLs = []string{"stun:stun3.l.google.com:19302", "stun:stun.cunicu.li:3478", "stun:stun.easyvoip.com:3478"}
 
+	errCreateNonClosedAgent             = errors.New("failed to create new agent if previous one is not closed")
+	errSwitchToIdle                     = errors.New("failed to switch to idle state")
 	errInvalidConnectionStateForRestart = errors.New("can not restart agent while in state")
 )
 
@@ -107,6 +109,20 @@ func (p *Peer) Start(ctx context.Context) error {
 		}
 		close(serverShutdown)
 	}()
+
+	if p.connectionState != ConnectionStateClosed {
+		return errCreateNonClosedAgent
+	} else {
+		p.connectionState = ConnectionStateCreating
+	}
+
+	// Reset state to ConnectionStateCreating if there is an error later
+	defer func() {
+		if p.connectionState == ConnectionStateCreating {
+			p.connectionState = ConnectionStateClosed
+		}
+	}()
+
 	//
 	//if err := p.client.Publish(ctx, &signal.Message{
 	//	Topic: p.target,
@@ -123,9 +139,23 @@ func (p *Peer) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to set candidate callback: %v", err)
 	}
 
+	// When selected candidate pair changes
+	if err := p.agent.OnSelectedCandidatePairChange(p.onSelectedCandidatePairChange); err != nil {
+		return fmt.Errorf("failed to setup on selected candidate pair handler: %w", err)
+	}
+
 	// When ICE Connection state has change print to stdout
 	if err := p.agent.OnConnectionStateChange(p.onConnectionStateChange); err != nil {
 		return err
+	}
+
+	currentState := p.connectionState
+
+	// 检查当前状态是否为 ConnectionStateCreating
+	if currentState == ConnectionStateCreating {
+		p.connectionState = ConnectionStateIdle
+	} else {
+		return errSwitchToIdle
 	}
 
 	// 开始连接检查
@@ -394,6 +424,13 @@ func (p *Peer) onRemoteCandidate(c *signal.Candidate) {
 	} else if p.connectionState == ConnectionStateGathering {
 		p.connectionState = ConnectionStateGatheringLocal
 	}
+}
+
+func (p *Peer) onSelectedCandidatePairChange(local ice.Candidate, remote ice.Candidate) {
+	p.logger.Info("Selected new candidate pair",
+		zap.Any("local", local),
+		zap.Any("remote", remote),
+	)
 }
 
 func convertToStunURIs(urls []string) ([]*stun.URI, error) {
