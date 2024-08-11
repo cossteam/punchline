@@ -349,6 +349,8 @@ func (p *Peer) sendCredentials(need bool) error {
 	p.localCredentials.NeedCreds = need
 
 	msg := &signaling.Message{
+		Topic: p.source,
+
 		Credentials: p.localCredentials,
 	}
 
