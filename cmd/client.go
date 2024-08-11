@@ -21,7 +21,7 @@ var Client = &cli.Command{
 			Name:    "config",
 			Aliases: []string{"c"},
 			Usage:   "config file path",
-			Value:   "config.yaml",
+			Value:   "",
 		},
 		&cli.StringFlag{
 			Name:    "loglevel",
@@ -102,7 +102,7 @@ func runClient(ctx *cli.Context) error {
 	//	controllerClient.WithClientPlugins(ps),
 	//)
 
-	signalingClient, err := signal.NewClient(c.SignalServer)
+	signalingClient, err := signal.NewClient(c.SignalServer, signal.WithClientName(c.Hostname))
 	if err != nil {
 		return err
 	}

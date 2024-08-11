@@ -23,6 +23,7 @@ message PublishRequest {
     bytes data = 3;
 
     Candidate candidate = 4;
+    Credentials credentials = 5;
 }
 
 message PublishResponse {}

@@ -88,8 +88,10 @@ func (sc *SignalingController) Unsubscribe(ctx context.Context, request *api.Uns
 func (sc *SignalingController) Publish(ctx context.Context, req *signaling.PublishRequest) (*signaling.PublishResponse, error) {
 	sc.logger.Debug("收到发布请求", zap.String("topic", req.Topic), zap.Any("candidate", req.Candidate))
 	sc.pub.Publish(&signaling.Message{
-		Topic: req.Topic,
-		Data:  req.Data,
+		Topic:       req.Topic,
+		Data:        req.Data,
+		Credentials: req.Credentials,
+		Candidate:   req.Candidate,
 	})
 	return &signaling.PublishResponse{}, nil
 }

@@ -80,7 +80,8 @@ func (c *SignalingClient) Publish(ctx context.Context, message *Message) error {
 		Hostname: c.hostname,
 		Data:     message.Data,
 
-		Candidate: message.Candidate,
+		Credentials: message.Credentials,
+		Candidate:   message.Candidate,
 	})
 	if err != nil {
 		return err

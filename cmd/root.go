@@ -55,7 +55,7 @@ func applyConfig(ctx *cli.Context) (config2 *config.Config, err error) {
 	//	cfg.UdpPort = udpPort
 	//}
 
-	grpcServer := ctx.String("grpcServer")
+	grpcServer := ctx.String("signalServer")
 	if grpcServer != "" {
 		cfg.SignalServer = grpcServer
 	}
