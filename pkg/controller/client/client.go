@@ -78,7 +78,7 @@ func (cc *clientController) Start(ctx context.Context) error {
 		close(serverShutdown)
 	}()
 
-	stunClient, err := stunclient.NewClient(cc.c.StunServer)
+	stunClient, err := stunclient.NewClient(cc.c.StunServer[0])
 	if err != nil {
 		cc.logger.Error("Failed to create STUN client", zap.Error(err))
 		return err

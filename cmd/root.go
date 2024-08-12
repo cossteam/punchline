@@ -80,10 +80,10 @@ func applyConfig(ctx *cli.Context) (config2 *config.Config, err error) {
 		cfg.Server = server
 	}
 
-	//stunServer := ctx.String("stunServer")
-	//if stunServer != "" {
-	//	cfg.StunServer = stunServer
-	//}
+	signalServer := ctx.String("signalServer")
+	if signalServer != "" {
+		cfg.SignalServer = signalServer
+	}
 
 	stunServers := ctx.StringSlice("stunServer")
 	for _, stunServer := range stunServers {
