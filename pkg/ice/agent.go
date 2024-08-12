@@ -20,8 +20,6 @@ import (
 )
 
 var (
-	_iceURLs = []string{"stun:stun3.l.google.com:19302", "stun:stun.cunicu.li:3478", "stun:stun.easyvoip.com:3478"}
-
 	errStillIdle                        = errors.New("not connected yet")
 	errCreateNonClosedAgent             = errors.New("failed to create new agent if previous one is not closed")
 	errSwitchToIdle                     = errors.New("failed to switch to idle state")
@@ -48,10 +46,11 @@ type Peer struct {
 func NewICEAgentWrapper(
 	logger *zap.Logger,
 	signalingClient signal.Client,
+	stunServer []string,
 	source string,
 	target string,
 ) (*Peer, error) {
-	iceURLs, err := convertToStunURIs(_iceURLs)
+	iceURLs, err := convertToStunURIs(stunServer)
 	if err != nil {
 		return nil, err
 	}
@@ -73,13 +72,11 @@ func NewICEAgentWrapper(
 		},
 	}
 
-	// 创建新的 ICE Agent
 	agent, err := ice.NewAgent(&iceConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ICE agent: %v", err)
 	}
 
-	// 获取本地用户名片段和密码
 	localUfrag, localPwd, err := agent.GetLocalUserCredentials()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get local user credentials: %v", err)
@@ -129,13 +126,6 @@ func (p *Peer) Start(ctx context.Context) error {
 		}
 	}()
 
-	//
-	//if err := p.client.Publish(ctx, &signal.Message{
-	//	Topic: p.target,
-	//}); err != nil {
-	//	return err
-	//}
-
 	if err := p.client.Subscribe(ctx, p.target, p.handleSignalingMessage); err != nil {
 		return err
 	}
@@ -157,17 +147,11 @@ func (p *Peer) Start(ctx context.Context) error {
 
 	currentState := p.connectionState
 
-	// 检查当前状态是否为 ConnectionStateCreating
 	if currentState == ConnectionStateCreating {
 		p.connectionState = ConnectionStateIdle
 	} else {
 		return errSwitchToIdle
 	}
-
-	// 设置远程用户名片段和密码
-	//if err := p.agent.SetRemoteCredentials(p.remoteUfrag, p.remotePwd); err != nil {
-	//	return fmt.Errorf("failed to set remote credentials: %v", err)
-	//}
 
 	// Send peer credentials as long as we remain in ConnectionStateIdle
 	go p.sendCredentialsWhileIdleWithBackoff(true)

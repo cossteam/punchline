@@ -47,15 +47,20 @@ var Client = &cli.Command{
 			Value:   "",
 		},
 		&cli.StringFlag{
-			Name:    "stunServer",
-			Usage:   "stunServer",
-			Aliases: []string{"ss"},
-			Value:   "stun:stun.easyvoip.com:3478",
-		},
-		&cli.StringFlag{
 			Name:  "signalServer",
 			Usage: "signalServer",
 			Value: "",
+		},
+		&cli.StringSliceFlag{
+			Name:    "stunServer",
+			Aliases: []string{"ss"},
+			Usage:   "List of names",
+			Value:   cli.NewStringSlice("stun:stun3.l.google.com:19302", "stun:stun.cunicu.li:3478", "stun:stun.easyvoip.com:3478"),
+		},
+		&cli.StringSliceFlag{
+			Name:    "subscriptions",
+			Aliases: []string{"s"},
+			Usage:   "Subscribed Hosts",
 		},
 	},
 	Action: runClient,
@@ -109,7 +114,7 @@ func runClient(ctx *cli.Context) error {
 
 	var peers []controller.Runnable
 	for _, sub := range c.Subscriptions {
-		wrapper, err := ice.NewICEAgentWrapper(logger, signalingClient, c.Hostname, sub.Topic)
+		wrapper, err := ice.NewICEAgentWrapper(logger, signalingClient, c.StunServer, c.Hostname, sub.Topic)
 		if err != nil {
 			return err
 		}
@@ -119,7 +124,6 @@ func runClient(ctx *cli.Context) error {
 	ctrl := controller.NewManager(
 		logger.With(zap.String("controller", "manager")),
 		peers...,
-	//client,
 	)
 	return ctrl.Start(SetupSignalHandler())
 }

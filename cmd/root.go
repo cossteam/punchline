@@ -80,9 +80,21 @@ func applyConfig(ctx *cli.Context) (config2 *config.Config, err error) {
 		cfg.Server = server
 	}
 
-	stunServer := ctx.String("stunServer")
-	if stunServer != "" {
-		cfg.StunServer = stunServer
+	//stunServer := ctx.String("stunServer")
+	//if stunServer != "" {
+	//	cfg.StunServer = stunServer
+	//}
+
+	stunServers := ctx.StringSlice("stunServer")
+	for _, stunServer := range stunServers {
+		cfg.StunServer = append(cfg.StunServer, stunServer)
+	}
+
+	subscriptions := ctx.StringSlice("subscriptions")
+	for _, subscription := range subscriptions {
+		cfg.Subscriptions = append(cfg.Subscriptions, config.Subscriptions{
+			Topic: subscription,
+		})
 	}
 
 	return cfg, nil

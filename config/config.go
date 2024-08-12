@@ -7,23 +7,25 @@ import (
 )
 
 type Config struct {
-	Subscriptions []struct {
-		Topic string `yaml:"topic"`
-	} `yaml:"subscriptions"`
-
 	EndpointPort uint   `yaml:"endpointPort"`
 	SignalServer string `yaml:"signalServer"`
 	Server       string `yaml:"server"`
 	Addr         string `yaml:"addr"`
 	Hostname     string `yaml:"hostname"`
 
-	StunServer string `yaml:"stunServer"`
+	StunServer []string `yaml:"stunServer"`
+
+	Subscriptions []Subscriptions `yaml:"subscriptions"`
 
 	Logging struct {
 		Level string `yaml:"level"`
 	} `yaml:"logging"`
 
 	Plugins []Plugin `yaml:"plugins"`
+}
+
+type Subscriptions struct {
+	Topic string `yaml:"topic"`
 }
 
 type Plugin struct {
