@@ -33,3 +33,21 @@ chmod +x punchline
 ```sh
 ./punchline client -c config/example-client.yaml
 ```
+
+## ice模式
+
+### 服务器
+
+```sh
+./punchline signal
+```
+
+### 客户端1
+```sh
+./punchline client --hostname client1 -subscriptions client2 --signalServer signalServer:7777
+```
+
+### 客户端2
+```sh
+./punchline client --hostname client2 -subscriptions client1 --signalServer signalServer:7777
+```
