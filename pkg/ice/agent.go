@@ -82,8 +82,6 @@ func NewICEAgentWrapper(
 		return nil, fmt.Errorf("failed to get local user credentials: %v", err)
 	}
 
-	fmt.Println("localUfrag => ", localUfrag)
-
 	wrapper := &Peer{
 		logger: logger,
 		client: signalingClient,
@@ -342,6 +340,7 @@ func (p *Peer) sendCredentials(need bool) error {
 		Data:        nil,
 		Credentials: msg.Credentials,
 	}); err != nil {
+		fmt.Println("e1 => ", err)
 		return err
 	}
 
@@ -443,6 +442,7 @@ func (p *Peer) sendCredentialsWhileIdleWithBackoff(need bool) {
 					// Do not retry when the signaling backend has been closed
 					return nil
 				}
+				fmt.Println("e2 => ", err)
 
 				return err
 			}
